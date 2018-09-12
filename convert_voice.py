@@ -12,7 +12,6 @@ from nnmnkwii.util import apply_each2d_trim
 from nnmnkwii.metrics import melcd
 from nnmnkwii.baseline.gmm import MLPG
 
-from os.path import basename, splitext
 import sys
 import time
 
@@ -23,8 +22,8 @@ from sklearn.model_selection import train_test_split
 import pyworld
 import pysptk
 from pysptk.synthesis import MLSADF, Synthesizer
-import IPython
-from IPython.display import Audio
+
+RESULT_ROOT = Path(__file__).parent/'result'
 
 fs = 16000
 fftlen = pyworld.get_cheaptrick_fft_size(fs)
@@ -53,8 +52,8 @@ class MyFileDataSource(CMUArcticWavFileDataSource):
         self.test_paths = None
 
     def collect_files(self):
-        paths = super(
-            MyFileDataSource, self).collect_files()
+        paths = [Path(path) for path in super(
+            MyFileDataSource, self).collect_files()]
         paths_train, paths_test = train_test_split(
             paths, test_size=test_size, random_state=1234)
 
@@ -146,14 +145,11 @@ for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths, slt_source.t
     print("{}-th sample".format(i+1))
     wo_MLPG = test_one_utt(src_path, tgt_path, disable_mlpg=True)
     w_MLPG = test_one_utt(src_path, tgt_path, disable_mlpg=False)
-    _, src = wavfile.read(src_path)
-    _, tgt = wavfile.read(tgt_path)
 
-    print("Source:", basename(src_path))
-    IPython.display.display(Audio(src, rate=fs))
-    print("Target:", basename(tgt_path))
-    IPython.display.display(Audio(tgt, rate=fs))
+    result_path = RESULT_ROOT/src_path.name
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+
     print("w/o MLPG")
-    IPython.display.display(Audio(wo_MLPG, rate=fs))
+    wavfile.write(result_path.with_suffix('.woMLPG.wav'), fs, wo_MLPG.astype(np.int16))
     print("w/ MLPG")
-    IPython.display.display(Audio(w_MLPG, rate=fs))
+    wavfile.write(result_path.with_suffix('.wMLPG.wav'), fs, w_MLPG.astype(np.int16))
