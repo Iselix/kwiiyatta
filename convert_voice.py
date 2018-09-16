@@ -1,8 +1,8 @@
 # Voice conversion
 # by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html
 
+import argparse
 from pathlib import Path
-DATA_ROOT = Path.home()/'data'/'cmu_arctic'
 
 from nnmnkwii.datasets import PaddedFileSourceDataset
 from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
@@ -23,6 +23,13 @@ import pyworld
 import pysptk
 from pysptk.synthesis import MLSADF, Synthesizer
 
+parser = argparse.ArgumentParser()
+parser.add_argument('--data-root', type=str,
+                    help='Root of data-set path for voice conversion')
+args = parser.parse_args()
+
+DATA_ROOT = (Path(args.data_root) if args.data_root is not None
+             else Path.home()/'data'/'cmu_arctic')
 RESULT_ROOT = Path(__file__).parent/'result'
 
 fs = 16000
