@@ -26,11 +26,14 @@ from pysptk.synthesis import MLSADF, Synthesizer
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-root', type=str,
                     help='Root of data-set path for voice conversion')
+parser.add_argument('--result-dir', type=str,
+                    help='Path to write result wav files')
 args = parser.parse_args()
 
 DATA_ROOT = (Path(args.data_root) if args.data_root is not None
              else Path.home()/'data'/'cmu_arctic')
-RESULT_ROOT = Path(__file__).parent/'result'
+RESULT_ROOT = (Path(args.result_dir) if args.result_dir is not None
+               else Path(__file__).parent/'result')
 
 fs = 16000
 fftlen = pyworld.get_cheaptrick_fft_size(fs)
