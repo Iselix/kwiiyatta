@@ -143,10 +143,13 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
 
 for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths, slt_source.test_paths)):
     print("{}-th sample".format(i+1))
-    MLPG = test_one_utt(src_path, tgt_path)
+    diff_MLPG = test_one_utt(src_path, tgt_path)
+    synth_MLPG = test_one_utt(src_path, tgt_path, diffvc=False)
 
     result_path = RESULT_ROOT/src_path.name
     result_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print("MLPG")
-    wavfile.write(result_path.with_suffix('.wMLPG.wav'), fs, MLPG.astype(np.int16))
+    print("diff MLPG")
+    wavfile.write(result_path.with_suffix('.diff.wav'), fs, diff_MLPG.astype(np.int16))
+    print("synth MLPG")
+    wavfile.write(result_path.with_suffix('.synth.wav'), fs, synth_MLPG.astype(np.int16))
