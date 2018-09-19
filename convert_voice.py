@@ -1,5 +1,5 @@
 # Voice conversion
-# by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html
+# by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html  # noqa
 
 import argparse
 from pathlib import Path
@@ -8,7 +8,8 @@ from nnmnkwii.baseline.gmm import MLPG
 from nnmnkwii.datasets import PaddedFileSourceDataset
 from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
 from nnmnkwii.metrics import melcd
-from nnmnkwii.preprocessing import delta_features, remove_zeros_frames, trim_zeros_frames
+from nnmnkwii.preprocessing import (delta_features, remove_zeros_frames,
+                                    trim_zeros_frames)
 from nnmnkwii.preprocessing.alignment import DTWAligner
 from nnmnkwii.util import apply_each2d_trim
 
@@ -106,7 +107,8 @@ if use_delta:
     X_aligned = apply_each2d_trim(delta_features, X_aligned, windows)
     Y_aligned = apply_each2d_trim(delta_features, Y_aligned, windows)
 
-XY = np.concatenate((X_aligned, Y_aligned), axis=-1).reshape(-1, X_aligned.shape[-1]*2)
+XY = (np.concatenate((X_aligned, Y_aligned), axis=-1)
+        .reshape(-1, X_aligned.shape[-1]*2))
 print(XY.shape)
 
 XY = remove_zeros_frames(XY)
@@ -119,7 +121,8 @@ gmm.fit(XY)
 
 
 def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
-    # GMM-based parameter generation is provided by the library in `baseline` module
+    # GMM-based parameter generation is provided by the library
+    # in `baseline` module
     if disable_mlpg:
         # Force disable MLPG
         paramgen = MLPG(gmm, windows=[(0, 0, np.array([1.0]))], diff=diffvc)
@@ -144,7 +147,8 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     mc = np.hstack((c0[:, None], mc))
     if diffvc:
         mc[:, 0] = 0  # remove power coefficients
-        engine = Synthesizer(MLSADF(order=order, alpha=alpha), hopsize=hop_length)
+        engine = Synthesizer(MLSADF(order=order, alpha=alpha),
+                             hopsize=hop_length)
         b = pysptk.mc2b(mc.astype(np.float64), alpha=alpha)
         waveform = engine.synthesis(x, b)
     else:
@@ -156,7 +160,8 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     return waveform
 
 
-for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths, slt_source.test_paths)):
+for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths,
+                                             slt_source.test_paths)):
     print("{}-th sample".format(i+1))
     diff_MLPG = test_one_utt(src_path, tgt_path)
     synth_MLPG = test_one_utt(src_path, tgt_path, diffvc=False)
@@ -165,6 +170,8 @@ for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths, slt_source.t
     result_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("diff MLPG")
-    wavfile.write(result_path.with_suffix('.diff.wav'), fs, diff_MLPG.astype(np.int16))
+    wavfile.write(result_path.with_suffix('.diff.wav'),
+                  fs, diff_MLPG.astype(np.int16))
     print("synth MLPG")
-    wavfile.write(result_path.with_suffix('.synth.wav'), fs, synth_MLPG.astype(np.int16))
+    wavfile.write(result_path.with_suffix('.synth.wav'),
+                  fs, synth_MLPG.astype(np.int16))
