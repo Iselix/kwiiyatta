@@ -12,9 +12,6 @@ from nnmnkwii.util import apply_each2d_trim
 from nnmnkwii.metrics import melcd
 from nnmnkwii.baseline.gmm import MLPG
 
-import sys
-import time
-
 import numpy as np
 from scipy.io import wavfile
 from sklearn.mixture import GaussianMixture
