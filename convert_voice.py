@@ -4,21 +4,21 @@
 import argparse
 from pathlib import Path
 
+from nnmnkwii.baseline.gmm import MLPG
 from nnmnkwii.datasets import PaddedFileSourceDataset
 from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
-from nnmnkwii.preprocessing.alignment import DTWAligner
-from nnmnkwii.preprocessing import trim_zeros_frames, remove_zeros_frames, delta_features
-from nnmnkwii.util import apply_each2d_trim
 from nnmnkwii.metrics import melcd
-from nnmnkwii.baseline.gmm import MLPG
+from nnmnkwii.preprocessing import delta_features, remove_zeros_frames, trim_zeros_frames
+from nnmnkwii.preprocessing.alignment import DTWAligner
+from nnmnkwii.util import apply_each2d_trim
 
 import numpy as np
+import pysptk
+from pysptk.synthesis import MLSADF, Synthesizer
+import pyworld
 from scipy.io import wavfile
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
-import pyworld
-import pysptk
-from pysptk.synthesis import MLSADF, Synthesizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-root', type=str,
