@@ -2,6 +2,7 @@
 # by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html  # noqa
 
 import argparse
+import copy
 from pathlib import Path
 
 from nnmnkwii.baseline.gmm import MLPG
@@ -15,15 +16,11 @@ from nnmnkwii.util import apply_each2d_trim
 
 import numpy as np
 
-import pysptk
-from pysptk.synthesis import MLSADF, Synthesizer
-
-import pyworld
-
-from scipy.io import wavfile
-
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
+
+import kwiiyatta
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--data-root', type=str,
@@ -41,12 +38,8 @@ RESULT_ROOT = (Path(args.result_dir) if args.result_dir is not None
 
 GMM_RANDOM_SEED = args.gmm_seed
 
-fs = 16000
-fftlen = pyworld.get_cheaptrick_fft_size(fs)
-alpha = pysptk.util.mcepalpha(fs)
 order = 24
 frame_period = 5
-hop_length = int(fs * (frame_period * 0.001))
 max_files = 100  # number of utterances to be used.
 test_size = 0.03
 use_delta = True
@@ -80,14 +73,10 @@ class MyFileDataSource(CMUArcticWavFileDataSource):
         return paths_train
 
     def collect_features(self, path):
-        fs, x = wavfile.read(path)
-        x = x.astype(np.float64)
-        f0, timeaxis = pyworld.dio(x, fs, frame_period=frame_period)
-        f0 = pyworld.stonemask(x, f0, timeaxis, fs)
-        spectrogram = pyworld.cheaptrick(x, f0, timeaxis, fs)
-        spectrogram = trim_zeros_frames(spectrogram)
-        mc = pysptk.sp2mc(spectrogram, order=order, alpha=alpha)
-        return mc
+        feature = kwiiyatta.analyze_wav(path, frame_period=frame_period,
+                                        mcep_order=order)
+        s = trim_zeros_frames(feature.spectrum_envelope)
+        return feature.mel_cepstrum.data[:len(s)]  # トリムするフレームが手前にずれてるのでは？
 
 
 clb_source = MyFileDataSource(data_root=DATA_ROOT,
@@ -135,35 +124,26 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     else:
         paramgen = MLPG(gmm, windows=windows, diff=diffvc)
 
-    fs, x = wavfile.read(src_path)
-    x = x.astype(np.float64)
-    f0, timeaxis = pyworld.dio(x, fs, frame_period=frame_period)
-    f0 = pyworld.stonemask(x, f0, timeaxis, fs)
-    spectrogram = pyworld.cheaptrick(x, f0, timeaxis, fs)
-    aperiodicity = pyworld.d4c(x, f0, timeaxis, fs)
+    src = kwiiyatta.analyze_wav(src_path, frame_period=frame_period,
+                                mcep_order=order)
 
-    mc = pysptk.sp2mc(spectrogram, order=order, alpha=alpha)
-    c0, mc = mc[:, 0], mc[:, 1:]
+    mcep = copy.copy(src.mel_cepstrum)
+    c0, mc = mcep.data[:, 0], mcep.data[:, 1:]
     if use_delta:
         mc = delta_features(mc, windows)
     mc = paramgen.transform(mc)
     if disable_mlpg and mc.shape[-1] != static_dim:
         mc = mc[:, :static_dim]
     assert mc.shape[-1] == static_dim
-    mc = np.hstack((c0[:, None], mc))
+    mcep.data = np.hstack((c0[:, None], mc))
     if diffvc:
-        mc[:, 0] = 0  # remove power coefficients
-        engine = Synthesizer(MLSADF(order=order, alpha=alpha),
-                             hopsize=hop_length)
-        b = pysptk.mc2b(mc.astype(np.float64), alpha=alpha)
-        waveform = engine.synthesis(x, b)
+        wav = kwiiyatta.apply_mlsa_filter(src, mcep)
     else:
-        spectrogram = pysptk.mc2sp(
-            mc.astype(np.float64), alpha=alpha, fftlen=fftlen)
-        waveform = pyworld.synthesize(
-            f0, spectrogram, aperiodicity, fs, frame_period)
+        feature = kwiiyatta.feature(src)
+        feature.mel_cepstrum = mcep
+        wav = feature.synthesize()
 
-    return waveform
+    return wav
 
 
 for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths,
@@ -176,8 +156,6 @@ for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths,
     result_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("diff MLPG")
-    wavfile.write(result_path.with_suffix('.diff.wav'),
-                  fs, diff_MLPG.astype(np.int16))
+    diff_MLPG.save(result_path.with_suffix('.diff.wav'))
     print("synth MLPG")
-    wavfile.write(result_path.with_suffix('.synth.wav'),
-                  fs, synth_MLPG.astype(np.int16))
+    synth_MLPG.save(result_path.with_suffix('.synth.wav'))
