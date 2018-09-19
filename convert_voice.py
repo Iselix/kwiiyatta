@@ -13,10 +13,14 @@ from nnmnkwii.preprocessing.alignment import DTWAligner
 from nnmnkwii.util import apply_each2d_trim
 
 import numpy as np
+
 import pysptk
 from pysptk.synthesis import MLSADF, Synthesizer
+
 import pyworld
+
 from scipy.io import wavfile
+
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
 
@@ -38,7 +42,7 @@ alpha = pysptk.util.mcepalpha(fs)
 order = 24
 frame_period = 5
 hop_length = int(fs * (frame_period * 0.001))
-max_files = 100 # number of utterances to be used.
+max_files = 100  # number of utterances to be used.
 test_size = 0.03
 use_delta = True
 
@@ -52,6 +56,7 @@ else:
     windows = [
         (0, 0, np.array([1.0])),
     ]
+
 
 class MyFileDataSource(CMUArcticWavFileDataSource):
     def __init__(self, *args, **kwargs):
@@ -79,10 +84,11 @@ class MyFileDataSource(CMUArcticWavFileDataSource):
         mc = pysptk.sp2mc(spectrogram, order=order, alpha=alpha)
         return mc
 
+
 clb_source = MyFileDataSource(data_root=DATA_ROOT,
-                                         speakers=["clb"], max_files=max_files)
+                              speakers=["clb"], max_files=max_files)
 slt_source = MyFileDataSource(data_root=DATA_ROOT,
-                                         speakers=["slt"], max_files=max_files)
+                              speakers=["slt"], max_files=max_files)
 
 X = PaddedFileSourceDataset(clb_source, 1200).asarray()
 Y = PaddedFileSourceDataset(slt_source, 1200).asarray()
@@ -111,11 +117,12 @@ gmm = GaussianMixture(
 
 gmm.fit(XY)
 
+
 def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     # GMM-based parameter generation is provided by the library in `baseline` module
     if disable_mlpg:
         # Force disable MLPG
-        paramgen = MLPG(gmm, windows=[(0,0, np.array([1.0]))], diff=diffvc)
+        paramgen = MLPG(gmm, windows=[(0, 0, np.array([1.0]))], diff=diffvc)
     else:
         paramgen = MLPG(gmm, windows=windows, diff=diffvc)
 
@@ -132,11 +139,11 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
         mc = delta_features(mc, windows)
     mc = paramgen.transform(mc)
     if disable_mlpg and mc.shape[-1] != static_dim:
-        mc = mc[:,:static_dim]
+        mc = mc[:, :static_dim]
     assert mc.shape[-1] == static_dim
     mc = np.hstack((c0[:, None], mc))
     if diffvc:
-        mc[:, 0] = 0 # remove power coefficients
+        mc[:, 0] = 0  # remove power coefficients
         engine = Synthesizer(MLSADF(order=order, alpha=alpha), hopsize=hop_length)
         b = pysptk.mc2b(mc.astype(np.float64), alpha=alpha)
         waveform = engine.synthesis(x, b)
@@ -147,6 +154,7 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
             f0, spectrogram, aperiodicity, fs, frame_period)
 
     return waveform
+
 
 for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths, slt_source.test_paths)):
     print("{}-th sample".format(i+1))
