@@ -9,6 +9,7 @@ kwiiyatta = {editable = true, path = "."}
 [dev-packages]
 "flake8" = "*"
 "flake8-import-order" = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.6"
