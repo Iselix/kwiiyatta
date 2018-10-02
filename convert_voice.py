@@ -1,8 +1,8 @@
 # Voice conversion
 # by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html
 
-from os.path import join, expanduser
-DATA_ROOT = join(expanduser("~"), "data", "cmu_arctic")
+from pathlib import Path
+DATA_ROOT = Path.home()/'data'/'cmu_arctic'
 
 from nnmnkwii.datasets import PaddedFileSourceDataset
 from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
