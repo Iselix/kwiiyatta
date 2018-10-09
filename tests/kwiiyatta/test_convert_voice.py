@@ -22,11 +22,11 @@ def scope_session():
     sys.argv = sys_argv
 
 
-def make_expected_feature(wavpath, fullset=False):
+def make_expected_feature(wavpath, fs=16000, fullset=False):
     src = feature.get_analyzer(
-        dataset.get_wav_path(dataset.CLB_DIR/wavpath, fullset))
+        dataset.get_wav_path(dataset.CLB_DIR/wavpath, fullset, fs=fs))
     tgt = feature.get_analyzer(
-        dataset.get_wav_path(dataset.SLT_DIR/wavpath, fullset))
+        dataset.get_wav_path(dataset.SLT_DIR/wavpath, fullset, fs=fs))
     tgt_aligned = kwiiyatta.align(tgt, src)
 
     expected = kwiiyatta.feature(src)
@@ -41,6 +41,14 @@ def setup_dataset(src_dir):
         shutil.copy(dataset.CLB_DIR/f'arctic_a{num:04}.wav', src_dir)
 
 
+def setup_44_dataset(src_dir):
+    for num in range(1, 9):
+        shutil.copy(dataset.get_wav_path(
+                        dataset.CLB_DIR/f'arctic_a{num:04}.wav',
+                        fs=44100),
+                    src_dir)
+
+
 def setup_dtype_dataset(src_dir):
     for num, dtype in zip(range(1, 9),
                           itertools.chain(dataset.DTYPES,
@@ -53,9 +61,14 @@ def setup_dtype_dataset(src_dir):
 
 
 @pytest.mark.assert_any
-@pytest.mark.parametrize('setup_func', [setup_dataset,
-                                        setup_dtype_dataset])
-def test_voice_conversion(tmpdir, setup_func):
+@pytest.mark.parametrize(
+    'setup_func,target_fs',
+    [
+        (setup_dataset,       16000),
+        (setup_44_dataset,    44100),
+        (setup_dtype_dataset, 16000),
+    ])
+def test_voice_conversion(tmpdir, setup_func, target_fs):
     tmp_path = pathlib.Path(tmpdir)
     result_root = tmp_path/'result'
     src_dir = tmp_path/'src'
@@ -67,35 +80,37 @@ def test_voice_conversion(tmpdir, setup_func):
         [
             sys.argv[0],
             '--source', str(src_dir),
-            '--target', str(dataset.SLT_DIR),
+            '--target', str(dataset.get_dataset_path(dataset.SLT_DIR,
+                                                     fs=target_fs)),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
             '--converter-components', '1',
             '--max-files', '8',
-            str(dataset.CLB_DIR/'arctic_a0009.wav'),
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0009.wav',
+                                     fs=target_fs)),
         ]
     cv.main()
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
     assert (result_root/'arctic_a0009.synth.wav').is_file()
 
-    expected = make_expected_feature('arctic_a0009.wav')
+    expected = make_expected_feature('arctic_a0009.wav', fs=target_fs)
 
     act_diff = kwiiyatta.analyze_wav(result_root/'arctic_a0009.diff.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_diff)
-    assert_any.between(0.094, f0_diff, 0.12)
-    assert_any.between(0.44, spec_diff, 0.46)
-    assert_any.between(0.047, ape_diff, 0.052)
-    assert_any.between(0.16, mcep_diff, 0.17)
+    assert_any.between(0.065, f0_diff, 0.12)
+    assert_any.between(0.42, spec_diff, 0.46)
+    assert_any.between(0.046, ape_diff, 0.052)
+    assert_any.between(0.11, mcep_diff, 0.17)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_synth)
-    assert_any.between(0.10, f0_diff, 0.11)
-    assert_any.between(0.49, spec_diff, 0.51)
-    assert_any.between(0.089, ape_diff, 0.093)
-    assert_any.between(0.16, mcep_diff, 0.17)
+    assert_any.between(0.10, f0_diff, 0.12)
+    assert_any.between(0.44, spec_diff, 0.51)
+    assert_any.between(0.078, ape_diff, 0.093)
+    assert_any.between(0.11, mcep_diff, 0.17)
 
 
 @pytest.mark.assert_any

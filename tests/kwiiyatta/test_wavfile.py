@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 
 import numpy as np
@@ -12,25 +13,27 @@ from tests.plugin import assert_any
 
 @pytest.mark.assert_any
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV, dataset.CLB_WAV2])
-@pytest.mark.parametrize('dtype', dataset.DTYPES)
-def test_load_wav(tmpdir, wavfile, dtype):
-    wav = kwiiyatta.load_wav(dataset.get_wav_path(wavfile, dtype))
+@pytest.mark.parametrize('dtype,fs', itertools.chain(
+    itertools.product(dataset.DTYPES, [16000]),
+    itertools.product(['i16'], dataset.FS)))
+def test_load_wav(tmpdir, wavfile, dtype, fs):
+    wav = kwiiyatta.load_wav(dataset.get_wav_path(wavfile, dtype=dtype, fs=fs))
 
-    assert wav.fs == 16000
+    assert wav.fs == fs
     assert -0.005 < wav.data.mean() < 0.005
 
     data_max = wav.data.max()
     assert_any.between(0.56, data_max, 0.61)
 
     data_min = wav.data.min()
-    assert_any.between(-0.65, data_min, -0.64)
+    assert_any.between(-0.67, data_min, -0.64)
 
     savepath = pathlib.Path(tmpdir)/'save.wav'
     wav.save(savepath, normalize=False)
 
     saved_wav = kwiiyatta.load_wav(savepath)
     assert saved_wav.fs == wav.fs
-    assert (saved_wav.data == wav.data).all()
+    assert np.abs(saved_wav.data - wav.data).max() == 0
 
 
 @pytest.mark.assert_any
@@ -46,7 +49,7 @@ def test_load_and_save_wav_normalized(tmpdir, wavfile):
 
     saved_wav = kwiiyatta.load_wav(savepath)
     assert saved_wav.fs == wav.fs
-    assert saved_wav.data.mean() < 1
+    assert saved_wav.data.mean() < 1e-5
     assert np.abs(saved_wav.data).max() <= expected_peak
 
     data_dc = wav.data.mean()
@@ -55,4 +58,4 @@ def test_load_and_save_wav_normalized(tmpdir, wavfile):
     if np.abs(expected_data).max() > expected_peak:
         expected_data *= expected_peak / data_max
 
-    assert np.abs(saved_wav.data - expected_data).max() < 1
+    assert np.abs(saved_wav.data - expected_data).max() < 1e-4

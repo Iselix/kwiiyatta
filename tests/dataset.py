@@ -1,3 +1,4 @@
+import itertools
 import pathlib
 
 import pytest
@@ -19,15 +20,31 @@ SLT_WAV2 = SLT_DIR/'arctic_a0002.wav'
 FULLSET_ROOT = DATASET_ROOT/'fullset'
 
 DTYPES = ['u8', 'i16', 'i32', 'f32', 'f64']
+FS = [16000, 22050, 44100, 48000, 96000]
+FS_COMB = [(fs1, fs2) for fs1, fs2 in itertools.combinations(FS, 2)]
 
 
-def get_dataset_path(wavdir_path, fullset=False, dtype='i16'):
+def get_dataset_path(wavdir_path, fullset=False, dtype='i16', fs=16000):
     dataset_path = wavdir_path.parent
     suffix = ''
     if dtype == 'i16':
         pass
     else:
         suffix = f'.{dtype!s}'
+
+    if fs == 16000:
+        pass
+    elif fs == 22050:
+        suffix += '.22'
+    elif fs == 44100:
+        suffix += '.44'
+    elif fs == 48000:
+        suffix += '.48'
+    elif fs == 96000:
+        suffix += '.96'
+    else:
+        assert False, f'fs {fs!s} hz is not supported'
+
     dataset_path = dataset_path.with_suffix(suffix)
 
     if fullset:
@@ -40,14 +57,14 @@ def get_dataset_path(wavdir_path, fullset=False, dtype='i16'):
 
     dataset_path = dataset_path/wavdir_path.name
 
-    assert dataset_path.is_dir(), f'dtype {dtype!s} is not supported'
+    assert dataset_path.is_dir(), f'dataset {dataset_path!s} is not found'
     return dataset_path
 
 
-def get_wav_path(wav_path, fullset=False, dtype='i16'):
+def get_wav_path(wav_path, fullset=False, dtype='i16', fs=16000):
     dataset_path = wav_path.parent
     wav_path = wav_path.relative_to(dataset_path)
-    dataset_path = get_dataset_path(dataset_path, fullset, dtype)
+    dataset_path = get_dataset_path(dataset_path, fullset, dtype, fs)
 
     result = dataset_path/wav_path
     assert result.is_file, 'wav file not found: {result!s}'

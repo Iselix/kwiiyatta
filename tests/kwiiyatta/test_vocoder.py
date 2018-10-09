@@ -1,4 +1,5 @@
 import copy
+import itertools
 
 from nnmnkwii.preprocessing.alignment import DTWAligner
 
@@ -77,9 +78,11 @@ def test_set_Analyzer_param():
     assert analyzer.spectrum_envelope is not None
 
 
-def test_analyzer_feature():
+@pytest.mark.parametrize('fs', dataset.FS)
+def test_analyzer_feature(fs):
     from kwiiyatta.vocoder.world import WorldSynthesizer
-    a = kwiiyatta.analyze_wav(dataset.CLB_WAV, frame_period=10, mcep_order=36)
+    a = kwiiyatta.analyze_wav(dataset.get_wav_path(dataset.CLB_WAV, fs=fs),
+                              frame_period=10, mcep_order=36)
     assert a.mel_cepstrum_order == 36
     assert a.spectrum_len == WorldSynthesizer.fs_spectrum_len(a.fs)
 
@@ -112,11 +115,19 @@ def test_analyze_difffile(check):
 
 @pytest.mark.assert_any
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
-@pytest.mark.parametrize('dtype', dataset.DTYPES)
+@pytest.mark.parametrize('dtype, fs',
+                         itertools.chain(
+                             itertools.product(dataset.DTYPES, [16000]),
+                             itertools.product(
+                                 ['i16'],
+                                 (fs for fs in dataset.FS if fs != 16000)),
+                         ))
 @pytest.mark.parametrize('frame_period', FRAME_PERIODS)
-def test_reanalyze(wavfile, dtype, frame_period):
-    a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, dtype=dtype),
-                              frame_period=frame_period)
+def test_reanalyze(wavfile, dtype, fs, frame_period):
+    a1 = feature.get_analyzer(
+        dataset.get_wav_path(wavfile, dtype=dtype, fs=fs),
+        frame_period=frame_period)
+    assert a1.fs == fs
 
     analyzer_wav = a1.synthesize()
     feature_wav = kwiiyatta.feature(a1).synthesize()
@@ -128,10 +139,10 @@ def test_reanalyze(wavfile, dtype, frame_period):
 
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(a1, a2)
-    assert_any.between(0.052, f0_diff, 0.081)
+    assert_any.between(0.052, f0_diff, 0.094)
     assert_any.between(0.20, spec_diff, 0.22)
-    assert_any.between(0.070, ape_diff, 0.092)
-    assert_any.between(0.091, mcep_diff, 0.10)
+    assert_any.between(0.062, ape_diff, 0.097)
+    assert_any.between(0.045, mcep_diff, 0.10)
 
 
 def test_feature():
@@ -213,3 +224,19 @@ def test_align_even():
 
     assert (exp_m1 == act1.mel_cepstrum.data).all()
     assert (exp_m2 == act2.mel_cepstrum.data).all()
+
+
+@pytest.mark.assert_any
+@pytest.mark.parametrize('fs1,fs2', dataset.FS_COMB)
+@pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
+@pytest.mark.parametrize('frame_period', FRAME_PERIODS)
+def test_resample(fs1, fs2, wavfile, frame_period):
+    if fs2 < fs1:
+        fs1, fs2 = fs2, fs1
+    a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs1),
+                              frame_period=frame_period)
+    a2 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs2),
+                              frame_period=frame_period)
+
+    f0_diff = feature.calc_diff(a1.f0, a2.f0)
+    assert_any.between(0.0012, f0_diff, 0.014)
