@@ -110,15 +110,11 @@ def test_mcep_dataset():
     mcep_dataset = MelCepstrumDataset(base)
 
     mcep_dataset['order24']
-    with pytest.raises(ValueError) as e:
-        mcep_dataset['order32']
 
-    assert 'order of "order32" is 32 but others are 24' == str(e.value)
+    assert (a.mel_cepstrum.data[:, 1:] == mcep_dataset['order32']).all()
 
-    with pytest.raises(ValueError) as e:
-        mcep_dataset['fs44']
-
-    assert 'fs of "fs44" is 44100 but others are 16000' == str(e.value)
+    assert (base['fs44'].resample_mel_cepstrum(16000).data[:, 1:]
+            == mcep_dataset['fs44']).all()
 
 
 def test_delta_dataset():

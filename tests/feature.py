@@ -1,8 +1,26 @@
+import copy
 import functools
+import math
 
 import numpy as np
 
+import scipy.signal as ssig
+
 import kwiiyatta
+
+
+def reshape(feature, new_shape):
+    shape = feature.shape[1]
+    shape_gcd = math.gcd(shape, new_shape)
+    pad_shape = shape//shape_gcd*20
+    trim_shape = new_shape//shape_gcd*20
+
+    feature = np.hstack((feature[:, 0][:, None].repeat(pad_shape, axis=1),
+                         feature,
+                         feature[:, -1][:, None].repeat(pad_shape, axis=1)))
+
+    feature = ssig.resample_poly(feature, new_shape, shape, axis=1)
+    return feature[:, trim_shape:-trim_shape]
 
 
 def calc_diff(expected, actual, strict=True):
@@ -11,8 +29,21 @@ def calc_diff(expected, actual, strict=True):
         actual = actual[:len(expected)]
     elif len(expected) > len(actual):
         expected = expected[:len(actual)]
-    norm = (np.abs if len(expected.shape) == 1
-            else lambda x: np.linalg.norm(x, axis=1))
+
+    if len(expected.shape) > 1:
+        def norm(x):
+            return np.linalg.norm(x, axis=1)
+
+        exp_shape = expected.shape[1]
+        act_shape = actual.shape[1]
+
+        if exp_shape < act_shape:
+            expected = reshape(expected, act_shape)
+        elif act_shape < exp_shape:
+            actual = reshape(actual, exp_shape)
+    else:
+        norm = np.abs
+
     return np.mean(norm(expected - actual)) / np.mean(norm(expected))
 
 
@@ -29,13 +60,23 @@ def calc_feature_diffs(exp, act, **kwargs):
             calc_diff(exp.mel_cepstrum.data, act.mel_cepstrum.data, **kwargs))
 
 
+def override_power(dest, tgt, out=None):
+    if out is None:
+        out = copy.copy(dest)
+    elif out is not dest:
+        out[:] = dest
+    out[:] *= np.repeat(np.exp(np.mean(np.log(tgt), axis=1)
+                               - np.mean(np.log(dest), axis=1))
+                        .reshape(-1, 1),
+                        dest.shape[-1],
+                        axis=1)
+    return out
+
+
 def override_spectrum_power(dest, tgt):
-    dest.spectrum_envelope[:] *= \
-        np.repeat(np.exp(np.mean(np.log(tgt.spectrum_envelope), axis=1)
-                         - np.mean(np.log(dest.spectrum_envelope), axis=1))
-                  .reshape(-1, 1),
-                  dest.spectrum_len,
-                  axis=1)
+    override_power(dest.spectrum_envelope,
+                   tgt.spectrum_envelope,
+                   dest.spectrum_envelope)
 
 
 @functools.lru_cache(maxsize=None)

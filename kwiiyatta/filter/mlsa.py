@@ -7,9 +7,19 @@ import kwiiyatta
 
 
 def apply_mlsa_filter(wav, mcep):
-    if wav.fs != mcep.fs:
-        raise ValueError(f'wav fs ({wav.fs!r}) and mcep fs ({mcep.fs!r} is '
-                         f'mismatch)')
+    if mcep.fs > wav.fs:
+        mcep = kwiiyatta.resample(mcep, wav.fs)
+    elif mcep.fs < wav.fs:
+        spec = kwiiyatta.Synthesizer.resample_spectrum_envelope(
+            mcep.extract_spectrum(),
+            mcep.fs,
+            wav.fs
+        )
+        cutoff = mcep.fs*spec.shape[1]//wav.fs
+        spec[:, cutoff:] = np.tile(np.atleast_2d(spec[:, cutoff-1]).T,
+                                   spec.shape[-1]-cutoff)
+        mcep = kwiiyatta.MelCepstrum(wav.fs, mcep.frame_period)
+        mcep.extract(spec)
     # remove power coefficients
     mc = np.hstack((np.zeros((mcep.data.shape[0], 1)), mcep.data[:, 1:]))
     alpha = mcep.alpha()

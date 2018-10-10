@@ -2,6 +2,8 @@ import numpy as np
 
 import pyworld
 
+import scipy
+
 import kwiiyatta
 from kwiiyatta.wavfile import Wavdata
 
@@ -57,6 +59,11 @@ class WorldAnalyzer(abc.Analyzer):
 
 
 class WorldSynthesizer(abc.Synthesizer):
+    SAFE_GUARD_MINIMUM = 0.000000000001
+    EPS = 0.00000000000000022204460492503131
+    FREQUENCY_INTERVAL = 3000.0
+    UPPER_LIMIT = 15000.0
+
     @staticmethod
     def reshape_feature(feature):
         spectrum_len = feature.spectrum_len
@@ -89,4 +96,47 @@ class WorldSynthesizer(abc.Synthesizer):
         feature = np.ascontiguousarray(feature)
         coded_ap = pyworld.code_aperiodicity(feature, fs)
         return pyworld.decode_aperiodicity(coded_ap, fs,
+                                           (new_spectrum_len-1)*2)
+
+    @classmethod
+    def _resample_up_spectrum_envelope(cls, feature, fs,
+                                       new_fs, new_spectrum_len):
+        pad_spectrum_len = new_spectrum_len - feature.shape[1]
+        return np.hstack((
+            feature,
+            np.abs(np.random.normal(
+                0, cls.EPS/fs,
+                (feature.shape[0], pad_spectrum_len)))
+        ))
+
+    @classmethod
+    def _get_aperiodicity_num(cls, fs):
+        return int(min(cls.UPPER_LIMIT, fs/2 - cls.FREQUENCY_INTERVAL)
+                   / cls.FREQUENCY_INTERVAL)
+
+    @classmethod
+    def _resample_down_aperiodicity(cls, feature, fs,
+                                    new_fs, new_spectrum_len):
+        feature = np.ascontiguousarray(feature)
+        coded_ap = pyworld.code_aperiodicity(feature, fs)
+        num = cls._get_aperiodicity_num(new_fs)
+        if num < coded_ap.shape[1]:
+            coded_ap = np.ascontiguousarray(coded_ap[:, :num])
+        return pyworld.decode_aperiodicity(coded_ap, new_fs,
+                                           (new_spectrum_len-1)*2)
+
+    @classmethod
+    def _resample_up_aperiodicity(cls, feature, fs, new_fs, new_spectrum_len):
+        feature = np.ascontiguousarray(feature)
+        coded_ap = pyworld.code_aperiodicity(feature, fs)
+        num = cls._get_aperiodicity_num(new_fs)
+        if num > coded_ap.shape[1]:
+            freq_axis = np.hstack((np.arange(coded_ap.shape[1]),
+                                   new_fs / 2 / cls.FREQUENCY_INTERVAL - 1))
+            coded_ap = np.hstack((coded_ap,
+                                  np.full((coded_ap.shape[0], 1),
+                                          -cls.SAFE_GUARD_MINIMUM)))
+            ap_interp = scipy.interpolate.interp1d(freq_axis, coded_ap, axis=1)
+            coded_ap = np.ascontiguousarray(ap_interp(np.arange(num)))
+        return pyworld.decode_aperiodicity(coded_ap, new_fs,
                                            (new_spectrum_len-1)*2)

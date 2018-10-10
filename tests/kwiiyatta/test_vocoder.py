@@ -246,16 +246,132 @@ def test_align_even():
 @pytest.mark.parametrize('fs1,fs2', dataset.FS_COMB)
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
 @pytest.mark.parametrize('frame_period', FRAME_PERIODS)
-def test_resample(fs1, fs2, wavfile, frame_period):
+def test_resample_down(fs1, fs2, wavfile, frame_period):
     if fs2 < fs1:
         fs1, fs2 = fs2, fs1
     a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs1),
                               frame_period=frame_period)
     a2 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs2),
                               frame_period=frame_period)
+    a2_r = kwiiyatta.resample(a2, fs1)
 
-    f0_diff = feature.calc_diff(a1.f0, a2.f0)
+    a2._spectrum_envelope = None
+    a2._aperiodicity = None
+    a2._mel_cepstrum.data = None
+
+    assert a1.fs == a2_r.fs
+    assert (feature.calc_diff(a2_r.mel_cepstrum.data,
+                              a2.resample_mel_cepstrum(a2_r.fs).data)
+            == 0)
+    assert feature.calc_diff(a2_r.f0, a2.f0) == 0
+    assert (feature.calc_powered_diff(a2_r.spectrum_envelope,
+                                      a2.resample_spectrum_envelope(a2_r.fs))
+            == 0)
+    assert(feature.calc_diff(a2_r.aperiodicity,
+                             a2.resample_aperiodicity(a2_r.fs))
+           == 0)
+
+    assert a2.mel_cepstrum.order == a2_r.mel_cepstrum.order
+
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(a1, a2_r)
     assert_any.between(0.0012, f0_diff, 0.014)
+    assert_any.between(0.0025, spec_diff, 0.0094)
+    assert_any.between(0.0015, ape_diff, 0.048)
+    assert_any.between(0.011, mcep_diff, 0.031)
+
+    a2_r_wav = a2_r.synthesize()
+    a2_r_s = kwiiyatta.Analyzer(a2_r_wav, frame_period=frame_period)
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(a1, a2_r_s)
+    assert_any.between(0.055, f0_diff, 0.11)
+    assert_any.between(0.20, spec_diff, 0.23)
+    assert_any.between(0.072, ape_diff, 0.11)
+    assert_any.between(0.036, mcep_diff, 0.056)
+
+    f2 = kwiiyatta.feature(a2)
+    f2.extract_mel_cepstrum()
+    f2.spectrum_envelope = None
+    f2_mcep_r = f2.resample_mel_cepstrum(a1.fs)
+    mcep_diff = feature.calc_diff(a1.mel_cepstrum.data, f2_mcep_r.data)
+    assert_any.between(0.014, mcep_diff, 0.041)
+
+    a2_mcep_r = kwiiyatta.resample(a2.mel_cepstrum, a1.fs)
+    mcep_diff = feature.calc_diff(a2_mcep_r.data, f2_mcep_r.data)
+    assert mcep_diff == 0
+
+
+@pytest.mark.assert_any
+@pytest.mark.parametrize('fs1,fs2', dataset.FS_COMB)
+@pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
+@pytest.mark.parametrize('frame_period', FRAME_PERIODS)
+def test_resample_up(fs1, fs2, wavfile, frame_period):
+    if fs1 < fs2:
+        fs1, fs2 = fs2, fs1
+    a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs1),
+                              frame_period=frame_period)
+    a2 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs2),
+                              frame_period=frame_period)
+    a2_r = kwiiyatta.resample(a2, fs1)
+
+    a2._spectrum_envelope = None
+    a2._aperiodicity = None
+    a2._mel_cepstrum.data = None
+
+    assert a1.fs == a2_r.fs
+    assert feature.calc_diff(a2_r.f0, a2.f0) == 0
+    assert_any.between(
+        1.7e-8,
+        feature.calc_powered_diff(a2_r.spectrum_envelope,
+                                  a2.resample_spectrum_envelope(a2_r.fs)),
+        1.4e-7)
+    assert (feature.calc_diff(a2_r.aperiodicity,
+                              a2.resample_aperiodicity(a2_r.fs))
+            == 0)
+    assert_any.between(
+        0.0009,
+        feature.calc_diff(a2_r.mel_cepstrum.data,
+                          a2.resample_mel_cepstrum(a2_r.fs).data),
+        0.004,
+        sig_dig=1)
+
+    assert a2.mel_cepstrum.order == a2_r.mel_cepstrum.order
+
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(a1, a2_r)
+    assert_any.between(0.0012, f0_diff, 0.014)
+    assert_any.between(0.0015, spec_diff, 0.0068)
+    assert_any.between(0.039, ape_diff, 0.20)
+    assert_any.between(0.10, mcep_diff, 0.36)
+
+    a2_r_wav = a2_r.synthesize()
+    a2_r_s = kwiiyatta.Analyzer(a2_r_wav, frame_period=frame_period)
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(a1, a2_r_s)
+    assert_any.between(0.050, f0_diff, 0.11)
+    assert_any.between(0.20, spec_diff, 0.23)
+    assert_any.between(0.064, ape_diff, 0.32)
+    assert_any.between(0.046, mcep_diff, 0.16)
+
+    f2 = kwiiyatta.feature(a2)
+    f2.extract_mel_cepstrum()
+    f2.spectrum_envelope = None
+    f2_mcep_r = f2.resample_mel_cepstrum(a1.fs)
+    mcep_diff = feature.calc_diff(a1.mel_cepstrum.data, f2_mcep_r.data)
+    assert_any.between(0.10, mcep_diff, 0.36)
+
+    a2_mcep_r = kwiiyatta.resample(a2.mel_cepstrum, a1.fs)
+    assert_any.between(0.0009,
+                       feature.calc_diff(a2_mcep_r.data, f2_mcep_r.data),
+                       0.004,
+                       sig_dig=1)
+
+    frame_fs2 = a1.spectrum_envelope.shape[1]*fs2//a1.fs
+
+    spec_diff = feature.calc_powered_diff(
+        a1.spectrum_envelope[:, :frame_fs2],
+        a2_r.spectrum_envelope[:, :frame_fs2])
+    assert_any.between(0.00012, spec_diff, 0.55)
 
 
 def test_reshape(check):

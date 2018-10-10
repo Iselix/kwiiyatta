@@ -56,6 +56,33 @@ class Feature(abc.ABC):
         return self.Synthesizer.reshape_aperiodicity(
             self.aperiodicity, self.fs, new_spectrum_len)
 
+    def resample_spectrum_envelope(self, new_fs):
+        return self.Synthesizer.resample_spectrum_envelope(
+            self.spectrum_envelope,
+            self.fs,
+            new_fs,
+        )
+
+    def resample_aperiodicity(self, new_fs):
+        return self.Synthesizer.resample_aperiodicity(
+            self.aperiodicity,
+            self.fs,
+            new_fs
+        )
+
+    def resample_mel_cepstrum(self, new_fs):
+        if self._get_spectrum_envelope() is not None:
+            return kwiiyatta.resample(
+                self.mel_cepstrum, new_fs,
+                order=self.mel_cepstrum_order,
+                spectrum=self.resample_spectrum_envelope(new_fs)
+            )
+        return kwiiyatta.resample(
+            self.mel_cepstrum, new_fs,
+            order=self.mel_cepstrum_order,
+            Synthesizer=self.Synthesizer
+        )
+
     @property
     def f0(self):
         return self._get_f0()
@@ -160,6 +187,21 @@ class MutableFeature(Feature):
         if self._get_aperiodicity().shape[1] != new_spectrum_len:
             self._set_aperiodicity(
                 self.reshaped_aperiodicity(new_spectrum_len))
+
+    def resample(self, new_fs):
+        if new_fs != self.fs:
+            # f0 に関しては何もしない
+            if self._get_aperiodicity() is not None:
+                self._set_aperiodicity(
+                    self.resample_aperiodicity(new_fs))
+            if self._get_spectrum_envelope() is not None:
+                self._set_spectrum_envelope(
+                    self.resample_spectrum_envelope(new_fs))
+                self._mel_cepstrum.data = None
+            elif self._mel_cepstrum.data is not None:
+                self._mel_cepstrum.resample(new_fs,
+                                            Synthesizer=self.Synthesizer)
+            self._mel_cepstrum._fs = new_fs
 
     @abc.abstractmethod
     def _set_f0(self, value):

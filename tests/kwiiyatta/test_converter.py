@@ -11,10 +11,17 @@ from tests import dataset, feature
 
 
 class NopConverter(converter_abc.FeatureConverter):
+    def __init__(self):
+        super().__init__()
+        self.expected_convert = None
+
     def _train(self, dataarray):
         pass
 
     def convert(self, feature):
+        if self.expected_convert is not None:
+            assert self.expected_convert == feature
+            self.expected_converter = None
         return feature
 
 
@@ -47,10 +54,9 @@ def test_mcep_converter():
 
     assert 'order is expected to 24 but 32' == str(e.value)
 
-    with pytest.raises(ValueError) as e:
-        a.mel_cepstrum_order = 24
-        mcep = a.mel_cepstrum
-        mcep._fs = 44100
-        mcep_converter.convert(mcep)
-
-    assert 'fs is expected to 16000 but 44100' == str(e.value)
+    a.mel_cepstrum_order = 24
+    mcep = a.mel_cepstrum
+    mcep._fs = 44100
+    mcep_converter.expected_convert = \
+        a.resample_mel_cepstrum(16000).data[:, 1:]
+    assert mcep_converter.convert(mcep).fs == 16000
