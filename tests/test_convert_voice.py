@@ -3,12 +3,10 @@ import subprocess
 
 import pytest
 
+from tests import dataset
+
 
 pytestmark = pytest.mark.slow
-
-
-TEST_ROOT = pathlib.Path(__file__).parent
-DATASET_ROOT = TEST_ROOT/'data'
 
 
 def test_voice_conversion(tmpdir):
@@ -16,7 +14,7 @@ def test_voice_conversion(tmpdir):
     subprocess.run(
         [
             'python', 'convert_voice.py',
-            '--data-root', str(DATASET_ROOT),
+            '--data-root', str(dataset.DATASET_ROOT),
             '--result-dir', str(result_root),
         ], check=True)
 
