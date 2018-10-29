@@ -11,10 +11,10 @@ from tests.plugin import assert_any
 
 
 @pytest.mark.assert_any
-@pytest.mark.parametrize('wavfile',
-                         [dataset.CLB_WAV, dataset.CLB_WAV2])
-def test_load_and_save_wav(tmpdir, wavfile):
-    wav = kwiiyatta.load_wav(wavfile)
+@pytest.mark.parametrize('wavfile', [dataset.CLB_WAV, dataset.CLB_WAV2])
+@pytest.mark.parametrize('dtype', dataset.DTYPES)
+def test_load_wav(tmpdir, wavfile, dtype):
+    wav = kwiiyatta.load_wav(dataset.get_wav_path(wavfile, dtype))
 
     assert wav.fs == 16000
     assert -0.005 < wav.data.mean() < 0.005

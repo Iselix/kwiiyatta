@@ -1,4 +1,6 @@
+import itertools
 import pathlib
+import shutil
 import sys
 
 import pytest
@@ -34,12 +36,37 @@ def make_expected_feature(wavpath, fullset=False):
     return expected
 
 
-def test_voice_conversion(tmpdir, check):
-    result_root = pathlib.Path(tmpdir)
+def setup_dataset(src_dir):
+    for num in range(1, 9):
+        shutil.copy(dataset.CLB_DIR/f'arctic_a{num:04}.wav', src_dir)
+
+
+def setup_dtype_dataset(src_dir):
+    for num, dtype in zip(range(1, 9),
+                          itertools.chain(dataset.DTYPES,
+                                          itertools.repeat('i16'))):
+        shutil.copy(
+            dataset.get_wav_path(
+                dataset.CLB_DIR/f'arctic_a{num:04}.wav',
+                dtype=dtype,
+            ), src_dir)
+
+
+@pytest.mark.assert_any
+@pytest.mark.parametrize('setup_func', [setup_dataset,
+                                        setup_dtype_dataset])
+def test_voice_conversion(tmpdir, setup_func):
+    tmp_path = pathlib.Path(tmpdir)
+    result_root = tmp_path/'result'
+    src_dir = tmp_path/'src'
+    src_dir.mkdir(exist_ok=True)
+
+    setup_func(src_dir)
+
     sys.argv = \
         [
             sys.argv[0],
-            '--source', str(dataset.CLB_DIR),
+            '--source', str(src_dir),
             '--target', str(dataset.SLT_DIR),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
@@ -57,18 +84,18 @@ def test_voice_conversion(tmpdir, check):
     act_diff = kwiiyatta.analyze_wav(result_root/'arctic_a0009.diff.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_diff)
-    check.round_equal(0.094, f0_diff)
-    check.round_equal(0.44, spec_diff)
-    check.round_equal(0.047, ape_diff)
-    check.round_equal(0.16, mcep_diff)
+    assert_any.between(0.094, f0_diff, 0.12)
+    assert_any.between(0.44, spec_diff, 0.46)
+    assert_any.between(0.047, ape_diff, 0.052)
+    assert_any.between(0.16, mcep_diff, 0.17)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_synth)
-    check.round_equal(0.10, f0_diff)
-    check.round_equal(0.49, spec_diff)
-    check.round_equal(0.089, ape_diff)
-    check.round_equal(0.16, mcep_diff)
+    assert_any.between(0.10, f0_diff, 0.11)
+    assert_any.between(0.49, spec_diff, 0.51)
+    assert_any.between(0.089, ape_diff, 0.093)
+    assert_any.between(0.16, mcep_diff, 0.17)
 
 
 @pytest.mark.assert_any

@@ -112,9 +112,11 @@ def test_analyze_difffile(check):
 
 @pytest.mark.assert_any
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
+@pytest.mark.parametrize('dtype', dataset.DTYPES)
 @pytest.mark.parametrize('frame_period', FRAME_PERIODS)
-def test_reanalyze(wavfile, frame_period):
-    a1 = feature.get_analyzer(wavfile, frame_period=frame_period)
+def test_reanalyze(wavfile, dtype, frame_period):
+    a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, dtype=dtype),
+                              frame_period=frame_period)
 
     analyzer_wav = a1.synthesize()
     feature_wav = kwiiyatta.feature(a1).synthesize()
@@ -126,10 +128,10 @@ def test_reanalyze(wavfile, frame_period):
 
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(a1, a2)
-    assert_any.between(0.079, f0_diff, 0.081)
+    assert_any.between(0.052, f0_diff, 0.081)
     assert_any.between(0.20, spec_diff, 0.22)
-    assert_any.between(0.070, ape_diff, 0.084)
-    assert_any.between(0.092, mcep_diff, 0.10)
+    assert_any.between(0.070, ape_diff, 0.092)
+    assert_any.between(0.091, mcep_diff, 0.10)
 
 
 def test_feature():
@@ -185,7 +187,7 @@ def test_feature():
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
 @pytest.mark.parametrize('mcep_order', MCEP_ORDERS)
 def test_mcep_to_spec(wavfile, mcep_order):
-    a1 = feature.get_analyzer(wavfile, mcep_order=mcep_order)
+    a1 = kwiiyatta.analyze_wav(wavfile, mcep_order=mcep_order)
     mcep = a1.mel_cepstrum
 
     assert mcep.data.shape[-1] == mcep_order+1

@@ -38,5 +38,12 @@ class Wavdata:
 
 def load_wav(wav):
     fs, data = wavfile.read(wav)
+    if data.dtype.kind == 'f':  # float
+        return Wavdata(fs, data.astype(np.float64))
+    if data.dtype.kind == 'u':  # unsigned int
+        assert data.dtype.itemsize == 1
+        return Wavdata(fs, (data.astype(np.float64)
+                            / (2**(data.dtype.itemsize*8-1)) - 1))
+    assert data.dtype.kind == 'i'  # signed integer
     return Wavdata(fs, (data.astype(np.float64)
                         / (2**(data.dtype.itemsize*8-1))))
