@@ -60,15 +60,15 @@ def test_voice_conversion(tmpdir, check):
     check.round_equal(0.094, f0_diff)
     check.round_equal(0.44, spec_diff)
     check.round_equal(0.047, ape_diff)
-    check.round_equal(0.20, mcep_diff)
+    check.round_equal(0.16, mcep_diff)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_synth)
     check.round_equal(0.10, f0_diff)
     check.round_equal(0.49, spec_diff)
-    check.round_equal(0.090, ape_diff)
-    check.round_equal(0.20, mcep_diff)
+    check.round_equal(0.089, ape_diff)
+    check.round_equal(0.16, mcep_diff)
 
 
 @pytest.mark.assert_any
@@ -105,10 +105,10 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.057, f0_diff, 0.089)
+        assert_any.between(0.048, f0_diff, 0.10)
         assert_any.between(0.44, spec_diff, 0.47)
-        assert_any.between(0.043, ape_diff, 0.054)
-        assert_any.between(0.17, mcep_diff, 0.20)
+        assert_any.between(0.040, ape_diff, 0.068)
+        assert_any.between(0.16, mcep_diff, 0.17)
 
     for result in results:
         result_path = (result_root/result).with_suffix('.synth.wav')
@@ -119,7 +119,7 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.062, f0_diff, 0.080)
-        assert_any.between(0.45, spec_diff, 0.50)
-        assert_any.between(0.10, ape_diff, 0.13)
-        assert_any.between(0.17, mcep_diff, 0.20)
+        assert_any.between(0.064, f0_diff, 0.084)
+        assert_any.between(0.44, spec_diff, 0.50)
+        assert_any.between(0.099, ape_diff, 0.13)
+        assert_any.between(0.16, mcep_diff, 0.18)

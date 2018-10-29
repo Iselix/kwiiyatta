@@ -17,13 +17,13 @@ def test_load_and_save_wav(tmpdir, wavfile):
     wav = kwiiyatta.load_wav(wavfile)
 
     assert wav.fs == 16000
-    assert -1 < wav.data.mean() < 1
+    assert -0.005 < wav.data.mean() < 0.005
 
     data_max = wav.data.max()
-    assert_any.between(18616, data_max, 19970, sig_dig=5)
+    assert_any.between(0.56, data_max, 0.61)
 
     data_min = wav.data.min()
-    assert_any.between(-21297, data_min, -21297, sig_dig=5)
+    assert_any.between(-0.65, data_min, -0.64)
 
     savepath = pathlib.Path(tmpdir)/'save.wav'
     wav.save(savepath, normalize=False)

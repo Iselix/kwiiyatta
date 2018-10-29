@@ -14,7 +14,7 @@ class Wavdata:
         dc = self.data.mean()
         self.data -= dc
         if peak_lv is not None:
-            max_peak = np.power(10, peak_lv/10) * 2**15
+            max_peak = np.power(10, peak_lv/10)
             peak = np.abs(self.data).max()
             if peak > max_peak:
                 self.data *= max_peak/peak
@@ -22,7 +22,7 @@ class Wavdata:
     def save(self, wav, normalize=True, **kwargs):
         if normalize:
             self.normalize(**kwargs)
-        wavfile.write(wav, self.fs, self.data.astype(np.int16))
+        wavfile.write(wav, self.fs, (self.data*(2**15)).astype(np.int16))
 
     def play(self, normalize=True, **kwargs):
         if normalize:
@@ -30,11 +30,13 @@ class Wavdata:
         audio = pyaudio.PyAudio()
         stream = audio.open(rate=self.fs, channels=1, format=pyaudio.paInt16,
                             output=True)
-        stream.write(self.data.astype(np.int16), num_frames=len(self.data))
+        stream.write((self.data*(2**15)).astype(np.int16),
+                     num_frames=len(self.data))
         stream.close()
         audio.terminate()
 
 
 def load_wav(wav):
     fs, data = wavfile.read(wav)
-    return Wavdata(fs, data.astype(np.float64))
+    return Wavdata(fs, (data.astype(np.float64)
+                        / (2**(data.dtype.itemsize*8-1))))

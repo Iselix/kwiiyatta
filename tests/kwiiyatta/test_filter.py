@@ -24,4 +24,4 @@ def test_mlsa_filter(check):
     check.round_equal(0.070, f0_diff)
     check.round_equal(0.32, spec_diff)
     check.round_equal(0.080, ape_diff)
-    check.round_equal(0.12, mcep_diff)
+    check.round_equal(0.11, mcep_diff)

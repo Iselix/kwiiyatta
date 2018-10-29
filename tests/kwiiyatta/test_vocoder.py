@@ -107,7 +107,7 @@ def test_analyze_difffile(check):
     check.round_equal(0.63, f0_diff)
     check.round_equal(1.0, spec_diff)
     check.round_equal(0.49, ape_diff)
-    check.round_equal(0.50, mcep_diff)
+    check.round_equal(0.47, mcep_diff)
 
 
 @pytest.mark.assert_any
@@ -129,7 +129,7 @@ def test_reanalyze(wavfile, frame_period):
     assert_any.between(0.079, f0_diff, 0.081)
     assert_any.between(0.20, spec_diff, 0.22)
     assert_any.between(0.070, ape_diff, 0.084)
-    assert_any.between(0.098, mcep_diff, 0.10)
+    assert_any.between(0.092, mcep_diff, 0.10)
 
 
 def test_feature():

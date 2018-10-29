@@ -36,7 +36,7 @@ def test_voice_resynthesis(tmpdir, check):
     check.round_equal(0.079, f0_diff)
     check.round_equal(0.19, spec_diff)
     check.round_equal(0.073, ape_diff)
-    check.round_equal(0.099, mcep_diff)
+    check.round_equal(0.093, mcep_diff)
 
 
 def test_voice_resynthesis_mcep(check, tmpdir):
@@ -59,7 +59,7 @@ def test_voice_resynthesis_mcep(check, tmpdir):
     check.round_equal(0.081, f0_diff)
     check.round_equal(0.22, spec_diff)
     check.round_equal(0.087, ape_diff)
-    check.round_equal(0.094, mcep_diff)
+    check.round_equal(0.089, mcep_diff)
 
 
 def test_voice_resynthesis_carrier(check, tmpdir):
