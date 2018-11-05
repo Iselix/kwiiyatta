@@ -30,12 +30,16 @@ parser.add_argument('--data-root', type=str,
                     help='Root of data-set path for voice conversion')
 parser.add_argument('--result-dir', type=str,
                     help='Path to write result wav files')
+parser.add_argument('--gmm-seed', type=int,
+                    help='Random seed for GaussianMixtureModel')
 args = parser.parse_args()
 
 DATA_ROOT = (Path(args.data_root) if args.data_root is not None
              else Path.home()/'data'/'cmu_arctic')
 RESULT_ROOT = (Path(args.result_dir) if args.result_dir is not None
                else Path(__file__).parent/'result')
+
+GMM_RANDOM_SEED = args.gmm_seed
 
 fs = 16000
 fftlen = pyworld.get_cheaptrick_fft_size(fs)
@@ -115,7 +119,9 @@ XY = remove_zeros_frames(XY)
 print(XY.shape)
 
 gmm = GaussianMixture(
-    n_components=64, covariance_type="full", max_iter=100, verbose=1)
+    n_components=64, covariance_type="full", max_iter=100, verbose=1,
+    random_state=GMM_RANDOM_SEED
+)
 
 gmm.fit(XY)
 

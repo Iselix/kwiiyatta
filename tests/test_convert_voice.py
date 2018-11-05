@@ -16,6 +16,7 @@ def test_voice_conversion(tmpdir):
             'python', 'convert_voice.py',
             '--data-root', str(dataset.DATASET_ROOT),
             '--result-dir', str(result_root),
+            '--gmm-seed', '0',
         ], check=True)
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
