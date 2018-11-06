@@ -1,6 +1,12 @@
 import pytest
 
 
+pytest_plugins = [
+    'pytester',
+    'tests.plugin.assert_any',
+]
+
+
 def pytest_addoption(parser):
     parser.addoption("--run-slow", action="store_true", default=False,
                      help="run slow tests")
