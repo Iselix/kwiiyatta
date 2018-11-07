@@ -1,3 +1,4 @@
+import copy
 import functools
 
 import numpy as np
@@ -88,3 +89,38 @@ def test_reanalyze(wavfile, frame_period):
     assert_any.between(0.079, f0_diff, 0.081)
     assert_any.between(0.20, spec_diff, 0.22)
     assert_any.between(0.070, ape_diff, 0.084)
+
+
+def test_feature():
+    a = get_analyzer(dataset.CLB_WAV)
+    f = kwiiyatta.feature(a)
+
+    assert f == a
+
+    f._fs *= 2
+    assert f != a
+    f._fs = a.fs
+    assert f == a
+
+    f._frame_period *= 2
+    assert f != a
+    f._frame_period = a.frame_period
+    assert f == a
+
+    f.f0 = None
+    assert f != a
+
+    f.f0 = a.f0
+    f.spectrum_envelope = copy.copy(a.spectrum_envelope)
+    assert f == a
+
+    f.spectrum_envelope[0][0] += 0.001
+    assert f != a
+    f.spectrum_envelope[0][0] = a.spectrum_envelope[0][0]
+    f.aperiodicity = copy.copy(f.aperiodicity)
+    assert f == a
+
+    f.aperiodicity[-1][-1] += 0.001
+    assert f != a
+    f.aperiodicity[-1][-1] = a.aperiodicity[-1][-1]
+    assert f == a
