@@ -1,10 +1,16 @@
 import abc
 
+import kwiiyatta
+
 
 class Feature(abc.ABC):
-    def __init__(self, fs, frame_period=5):
+    def __init__(self, fs, frame_period=5, Synthesizer=None):
         self._fs = fs
         self._frame_period = frame_period
+        if Synthesizer is None:
+            self.Synthesizer = kwiiyatta.Synthesizer
+        else:
+            self.Synthesizer = Synthesizer
 
     @property
     def fs(self):
@@ -37,6 +43,9 @@ class Feature(abc.ABC):
     @property
     def aperiodicity(self):
         return self._get_aperiodicity()
+
+    def synthesize(self):
+        return self.Synthesizer.synthesize(self)
 
     def __eq__(self, other):
         if self.frame_period != other.frame_period or self.fs != other.fs:

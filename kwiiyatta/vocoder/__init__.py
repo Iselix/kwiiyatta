@@ -1,8 +1,9 @@
 from .feature import Feature, feature
-from .world import WorldAnalyzer
+from .world import WorldAnalyzer, WorldSynthesizer
 
 
 Analyzer = WorldAnalyzer
+Synthesizer = WorldSynthesizer
 
 
 def analyze_wav(wavfile, Analyzer=None, **kwargs):
@@ -17,4 +18,4 @@ def analyze_wav(wavfile, Analyzer=None, **kwargs):
 
 __all__ = ['analyze_wav']
 __all__ += ['Feature', 'feature']
-__all__ += ['Analyzer']
+__all__ += ['Analyzer', 'Synthesizer']

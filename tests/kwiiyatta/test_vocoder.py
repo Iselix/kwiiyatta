@@ -5,8 +5,6 @@ import numpy as np
 
 import pytest
 
-import pyworld
-
 import kwiiyatta
 
 from tests import dataset
@@ -79,10 +77,12 @@ def test_analyze_difffile(check):
 def test_reanalyze(wavfile, frame_period):
     a1 = get_analyzer(wavfile, frame_period=frame_period)
 
-    waveform = pyworld.synthesize(a1.f0, a1.spectrum_envelope, a1.aperiodicity,
-                                  a1.fs, a1.frame_period)
+    analyzer_wav = a1.synthesize()
+    feature_wav = kwiiyatta.feature(a1).synthesize()
+    assert analyzer_wav.fs == feature_wav.fs
+    assert (analyzer_wav.data == feature_wav.data).all()
 
-    a2 = kwiiyatta.Analyzer(kwiiyatta.Wavdata(a1.fs, waveform),
+    a2 = kwiiyatta.Analyzer(analyzer_wav,
                             frame_period=frame_period)
 
     f0_diff, spec_diff, ape_diff = calc_feature_diffs(a1, a2)

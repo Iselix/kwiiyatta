@@ -19,6 +19,8 @@ class Feature(abc.MutableFeature):
     def init(cls, feature, **kwargs):
         if 'frame_period' not in kwargs:
             kwargs['frame_period'] = feature.frame_period
+        if 'Synthesizer' not in kwargs:
+            kwargs['Synthesizer'] = feature.Synthesizer
         other = cls(feature.fs, **kwargs)
         other._f0 = feature.f0
         other._spectrum_envelope = feature.spectrum_envelope

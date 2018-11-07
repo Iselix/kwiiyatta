@@ -1,5 +1,7 @@
 import pyworld
 
+from kwiiyatta.wavfile import Wavdata
+
 from . import abc
 
 
@@ -33,3 +35,16 @@ class WorldAnalyzer(abc.Analyzer):
                 **kwargs
             )
         return self._aperiodicity
+
+
+class WorldSynthesizer(abc.Synthesizer):
+    @staticmethod
+    def synthesize(feature):
+        return Wavdata(
+            feature.fs,
+            pyworld.synthesize(
+                feature.f0,
+                feature.spectrum_envelope,
+                feature.aperiodicity,
+                feature.fs, feature.frame_period
+            ))
