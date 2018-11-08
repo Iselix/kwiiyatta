@@ -31,7 +31,9 @@ def test_voice_resynthesis(tmpdir, check):
 
     expected = kwiiyatta.analyze_wav(dataset.CLB_WAV)
     actual = kwiiyatta.analyze_wav(result_file)
-    f0_diff, spec_diff, ape_diff = feature.calc_feature_diffs(expected, actual)
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(expected, actual)
     check.round_equal(0.079, f0_diff)
     check.round_equal(0.20, spec_diff)
     check.round_equal(0.073, ape_diff)
+    check.round_equal(0.099, mcep_diff)

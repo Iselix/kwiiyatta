@@ -1,24 +1,41 @@
 import abc
+import copy
+
+import numpy as np
 
 import kwiiyatta
 
+from ..mcep import MelCepstrum
+
 
 class Feature(abc.ABC):
-    def __init__(self, fs, frame_period=5, Synthesizer=None):
-        self._fs = fs
-        self._frame_period = frame_period
+    def __init__(self, fs, frame_period=5, mcep_order=24, Synthesizer=None):
+        self.mel_cepstrum_order = mcep_order
         if Synthesizer is None:
             self.Synthesizer = kwiiyatta.Synthesizer
         else:
             self.Synthesizer = Synthesizer
+        self._mel_cepstrum = MelCepstrum(fs, frame_period)
+
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        result._mel_cepstrum = copy.copy(self._mel_cepstrum)
+        return result
 
     @property
     def fs(self):
-        return self._fs
+        return self._mel_cepstrum.fs
 
     @property
     def frame_period(self):
-        return self._frame_period
+        return self._mel_cepstrum.frame_period
+
+    @property
+    @abc.abstractmethod
+    def spectrum_len(self):
+        return self.Synthesizer.fs_spectrum_len(self.fs)
 
     @abc.abstractmethod
     def _get_f0(self):
@@ -28,13 +45,23 @@ class Feature(abc.ABC):
     def f0(self):
         return self._get_f0()
 
+    def extract_spectrum_envelope(self, spectrum_len=None):
+        if self._mel_cepstrum.data is not None:
+            if spectrum_len is None:
+                spectrum_len = self.spectrum_len
+            return self._mel_cepstrum.extract_spectrum(spectrum_len)
+        return None
+
     @abc.abstractmethod
     def _get_spectrum_envelope(self):
         raise NotImplementedError
 
     @property
     def spectrum_envelope(self):
-        return self._get_spectrum_envelope()
+        spec = self._get_spectrum_envelope()
+        if spec is not None:
+            return spec
+        return self.extract_spectrum_envelope()
 
     @abc.abstractmethod
     def _get_aperiodicity(self):
@@ -43,6 +70,29 @@ class Feature(abc.ABC):
     @property
     def aperiodicity(self):
         return self._get_aperiodicity()
+
+    def extract_mel_cepstrum(self, spectrum=None):
+        if spectrum is not None:
+            self._set_spectrum_envelope(None)
+            spec = spectrum
+        else:
+            if self._mel_cepstrum.data is not None:
+                if self.mel_cepstrum_order == self._mel_cepstrum.order:
+                    return self._mel_cepstrum
+                elif self.mel_cepstrum_order < self._mel_cepstrum.order:
+                    mcep = copy.copy(self._mel_cepstrum)
+                    mcep.data = mcep.data[:, :self.mel_cepstrum_order+1]
+                    return mcep
+            spec = self.spectrum_envelope
+
+        if spec is not None:
+            self._mel_cepstrum.extract(spec, self.mel_cepstrum_order)
+            return self._mel_cepstrum
+        return None
+
+    @property
+    def mel_cepstrum(self):
+        return self.extract_mel_cepstrum()
 
     def synthesize(self):
         return self.Synthesizer.synthesize(self)
@@ -77,6 +127,11 @@ class MutableFeature(Feature):
 
     @Feature.spectrum_envelope.setter
     def spectrum_envelope(self, value):
+        if value is None:
+            if self._mel_cepstrum.data is None:
+                self.extract_mel_cepstrum()
+        else:
+            self._mel_cepstrum.data = None
         self._set_spectrum_envelope(value)
 
     @abc.abstractmethod
@@ -86,3 +141,17 @@ class MutableFeature(Feature):
     @Feature.aperiodicity.setter
     def aperiodicity(self, value):
         self._set_aperiodicity(value)
+
+    @Feature.mel_cepstrum.setter
+    def mel_cepstrum(self, data):
+        if data is not None:
+            if isinstance(data, MelCepstrum):
+                if data.fs != self.fs:
+                    raise ValueError("MelCepstrum.fs is mismatch")
+                data = data.data
+            elif not isinstance(data, np.ndarray):
+                raise TypeError('Feature.mel_cepstrum should be a MelCepstrum'
+                                ' or ndarray')
+            if data is not None:
+                self._set_spectrum_envelope(None)
+        self._mel_cepstrum.data = data

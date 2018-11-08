@@ -6,3 +6,7 @@ class Synthesizer(abc.ABC):
     @abc.abstractmethod
     def synthesize(feature):
         raise NotImplementedError
+
+    @staticmethod
+    def fs_spectrum_len(fs):
+        raise NotImplementedError

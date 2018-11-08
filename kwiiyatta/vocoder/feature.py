@@ -1,3 +1,5 @@
+import copy
+
 from . import abc
 
 
@@ -19,13 +21,22 @@ class Feature(abc.MutableFeature):
     def init(cls, feature, **kwargs):
         if 'frame_period' not in kwargs:
             kwargs['frame_period'] = feature.frame_period
+        if 'mcep_order' not in kwargs:
+            kwargs['mcep_order'] = feature.mel_cepstrum_order
         if 'Synthesizer' not in kwargs:
             kwargs['Synthesizer'] = feature.Synthesizer
         other = cls(feature.fs, **kwargs)
         other._f0 = feature.f0
         other._spectrum_envelope = feature.spectrum_envelope
         other._aperiodicity = feature.aperiodicity
+        other._mel_cepstrum = copy.copy(feature._mel_cepstrum)
         return other
+
+    @property
+    def spectrum_len(self):
+        if self._spectrum_envelope is not None:
+            return self._spectrum_envelope.shape[-1]
+        return super().spectrum_len
 
     def _get_f0(self):
         return self._f0
@@ -44,3 +55,6 @@ class Feature(abc.MutableFeature):
 
     def _set_aperiodicity(self, value):
         self._aperiodicity = value
+
+    def synthesize(self):
+        return self.Synthesizer.synthesize(self)

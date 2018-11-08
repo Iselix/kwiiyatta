@@ -10,6 +10,8 @@ class Config:
             argparser = argparse.ArgumentParser()
         argparser.add_argument('--frame-period', type=int, default=5,
                                help='Frame period milli-seconds of vocoder')
+        argparser.add_argument('--mcep-order', type=int, default=24,
+                               help='Mel-cepstrum order for spectrum envelope')
         self.parser = argparser
 
     def add_argument(self, *args, **kwargs):
@@ -26,4 +28,5 @@ class Config:
         if Analyzer is None:
             Analyzer = kwiiyatta.Analyzer
         kwargs['frame_period'] = self.frame_period
+        kwargs['mcep_order'] = self.mcep_order
         return Analyzer(*args, **kwargs)

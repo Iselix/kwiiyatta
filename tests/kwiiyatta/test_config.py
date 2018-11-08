@@ -19,13 +19,15 @@ def test_empty_argument():
     conf.parse_args()
 
     assert conf.frame_period == 5
+    assert conf.mcep_order == 24
 
 
 def test_argument():
     conf = kwiiyatta.Config()
-    conf.parse_args(['--frame-period', '10'])
+    conf.parse_args(['--frame-period', '10', '--mcep-order', '32'])
 
     assert conf.frame_period == 10
+    assert conf.mcep_order == 32
 
 
 def test_pass_parser():
@@ -54,13 +56,16 @@ def test_sys_argv_and_parse():
     assert conf.frame_period == 40
 
 
-@pytest.mark.parametrize('args,frame_period',
-                         [([], 5),
-                          (['--frame-period', '10'], 10)])
-def test_create_analyzer(args, frame_period):
-    print(f'sys argv:{sys.argv!r}')
+@pytest.mark.parametrize('args,frame_period,mcep_order',
+                         [
+                             ([], 5, 24),
+                             (['--frame-period', '10'], 10, 24),
+                             (['--mcep-order', '32'], 5, 32),
+                         ])
+def test_create_analyzer(args, frame_period, mcep_order):
     conf = kwiiyatta.Config()
     conf.parse_args(args)
     analyzer = conf.create_analyzer(kwiiyatta.Wavdata(0, None))
 
     assert analyzer.frame_period == frame_period
+    assert analyzer.mel_cepstrum_order == mcep_order

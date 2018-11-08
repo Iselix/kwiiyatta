@@ -21,4 +21,5 @@ def calc_feature_diffs(exp, act, **kwargs):
             calc_powered_diff(exp.spectrum_envelope,
                               act.spectrum_envelope,
                               **kwargs),
-            calc_diff(exp.aperiodicity, act.aperiodicity, **kwargs))
+            calc_diff(exp.aperiodicity, act.aperiodicity, **kwargs),
+            calc_diff(exp.mel_cepstrum.data, act.mel_cepstrum.data, **kwargs))

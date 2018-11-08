@@ -10,6 +10,12 @@ class WorldAnalyzer(abc.Analyzer):
         super().__init__(*args, **kwargs)
         self._timeaxis = None
 
+    @property
+    def spectrum_len(self):
+        if self._spectrum_envelope is not None:
+            return self._spectrum_envelope.shape[-1]
+        return WorldSynthesizer.fs_spectrum_len(self.fs)
+
     def extract_f0(self, **kwargs):
         if self._f0 is None:
             self._f0, self._timeaxis = pyworld.dio(
@@ -48,3 +54,7 @@ class WorldSynthesizer(abc.Synthesizer):
                 feature.aperiodicity,
                 feature.fs, feature.frame_period
             ))
+
+    @staticmethod
+    def fs_spectrum_len(fs):
+        return pyworld.get_cheaptrick_fft_size(fs) // 2 + 1
