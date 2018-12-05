@@ -14,4 +14,9 @@ setuptools.setup(
         'pyworld',
         'pysptk',
     ],
+    entry_points={
+        'console_scripts': [
+            'kwiieiya=kwiiyatta.resynthesize_voice:main',
+        ],
+    },
 )
