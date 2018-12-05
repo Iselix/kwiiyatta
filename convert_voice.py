@@ -1,7 +1,6 @@
 # Voice conversion
 # by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html  # noqa
 
-import argparse
 import copy
 from pathlib import Path
 
@@ -22,24 +21,22 @@ from sklearn.model_selection import train_test_split
 import kwiiyatta
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--data-root', type=str,
-                    help='Root of data-set path for voice conversion')
-parser.add_argument('--result-dir', type=str,
-                    help='Path to write result wav files')
-parser.add_argument('--gmm-seed', type=int,
-                    help='Random seed for GaussianMixtureModel')
-args = parser.parse_args()
+conf = kwiiyatta.Config()
+conf.add_argument('--data-root', type=str,
+                  help='Root of data-set path for voice conversion')
+conf.add_argument('--result-dir', type=str,
+                  help='Path to write result wav files')
+conf.add_argument('--gmm-seed', type=int,
+                  help='Random seed for GaussianMixtureModel')
+conf.parse_args()
 
-DATA_ROOT = (Path(args.data_root) if args.data_root is not None
+DATA_ROOT = (Path(conf.data_root) if conf.data_root is not None
              else Path.home()/'data'/'cmu_arctic')
-RESULT_ROOT = (Path(args.result_dir) if args.result_dir is not None
+RESULT_ROOT = (Path(conf.result_dir) if conf.result_dir is not None
                else Path(__file__).parent/'result')
 
-GMM_RANDOM_SEED = args.gmm_seed
+GMM_RANDOM_SEED = conf.gmm_seed
 
-order = 24
-frame_period = 5
 max_files = 100  # number of utterances to be used.
 test_size = 0.03
 use_delta = True
@@ -73,8 +70,7 @@ class MyFileDataSource(CMUArcticWavFileDataSource):
         return paths_train
 
     def collect_features(self, path):
-        feature = kwiiyatta.analyze_wav(path, frame_period=frame_period,
-                                        mcep_order=order)
+        feature = conf.create_analyzer(path, Analyzer=kwiiyatta.analyze_wav)
         s = trim_zeros_frames(feature.spectrum_envelope)
         return feature.mel_cepstrum.data[:len(s)]  # トリムするフレームが手前にずれてるのでは？
 
@@ -124,8 +120,7 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     else:
         paramgen = MLPG(gmm, windows=windows, diff=diffvc)
 
-    src = kwiiyatta.analyze_wav(src_path, frame_period=frame_period,
-                                mcep_order=order)
+    src = conf.create_analyzer(src_path, Analyzer=kwiiyatta.analyze_wav)
 
     mcep = copy.copy(src.mel_cepstrum)
     c0, mc = mcep.data[:, 0], mcep.data[:, 1:]
