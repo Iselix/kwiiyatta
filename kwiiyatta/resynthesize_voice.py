@@ -9,6 +9,8 @@ def main():
                       help='Source wav file of voice resynthesis')
     conf.add_argument('--result-dir', type=str,
                       help='Path to write result wav files')
+    conf.add_argument('--play', action='store_true',
+                      help='Play result wavform')
     conf.parse_args()
 
     source_path = pathlib.Path(conf.source).resolve()
@@ -25,6 +27,9 @@ def main():
 
     result_path.parent.mkdir(parents=True, exist_ok=True)
     wav.save(result_path)
+
+    if conf.play:
+        wav.play()
 
 
 if __name__ == '__main__':
