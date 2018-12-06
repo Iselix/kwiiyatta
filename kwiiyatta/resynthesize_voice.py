@@ -11,7 +11,10 @@ def main():
                       help='Path to write result wav files')
     conf.add_argument('--play', action='store_true',
                       help='Play result wavform')
+    conf.add_argument('--no-save', action='store_true',
+                      help='Not to write result wav file, and play wavform')
     conf.parse_args()
+    conf.play |= conf.no_save
 
     source_path = pathlib.Path(conf.source).resolve()
     source = conf.create_analyzer(source_path, Analyzer=kwiiyatta.analyze_wav)
@@ -25,8 +28,9 @@ def main():
 
     wav = feature.synthesize()
 
-    result_path.parent.mkdir(parents=True, exist_ok=True)
-    wav.save(result_path)
+    if not conf.no_save:
+        result_path.parent.mkdir(parents=True, exist_ok=True)
+        wav.save(result_path)
 
     if conf.play:
         wav.play()
