@@ -11,6 +11,7 @@ setuptools.setup(
         'numpy',
         'scipy',
         'sklearn',
+        'pyaudio',
         'pyworld',
         'pysptk',
     ],
