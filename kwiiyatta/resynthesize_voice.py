@@ -20,6 +20,8 @@ def main():
                       help='Wav file to use for carrier')
     conf.add_argument('--diffvc', action='store_true',
                       help='Use difference MelCepstrum synthesis')
+    conf.add_argument('--result-fs', type=int,
+                      help='Result waveform sampling rate')
     conf.parse_args()
     conf.play |= conf.no_save
 
@@ -50,6 +52,8 @@ def main():
         if conf.mcep:
             feature.extract_mel_cepstrum()
             feature.spectrum_envelope = None
+        if conf.result_fs is not None:
+            feature.resample(conf.result_fs)
         wav = feature.synthesize()
 
     if not conf.no_save:
