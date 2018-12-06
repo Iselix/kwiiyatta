@@ -9,6 +9,8 @@ def main():
                       help='Source wav file of voice resynthesis')
     conf.add_argument('--result-dir', type=str,
                       help='Path to write result wav files')
+    conf.add_argument('--mcep', action='store_true',
+                      help='Use mel-cepstrum to resynthesize')
     conf.add_argument('--play', action='store_true',
                       help='Play result wavform')
     conf.add_argument('--no-save', action='store_true',
@@ -25,6 +27,10 @@ def main():
         result_path = pathlib.Path(conf.result_dir)/source_path.name
 
     feature = kwiiyatta.feature(source)
+
+    if conf.mcep:
+        feature.extract_mel_cepstrum()
+        feature.spectrum_envelope = None
 
     wav = feature.synthesize()
 
