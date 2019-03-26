@@ -91,18 +91,22 @@ def test_set_Analyzer_param():
 
 
 @pytest.mark.parametrize('fs', dataset.FS)
-def test_analyzer_feature(fs):
+@pytest.mark.parametrize('frame_period', FRAME_PERIODS)
+def test_analyzer_feature(fs, frame_period):
     from kwiiyatta.vocoder.world import WorldSynthesizer
     a = kwiiyatta.analyze_wav(dataset.get_wav_path(dataset.CLB_WAV, fs=fs),
-                              frame_period=10, mcep_order=36)
+                              frame_period=frame_period, mcep_order=36)
     assert a.mel_cepstrum_order == 36
     assert a.spectrum_len == WorldSynthesizer.fs_spectrum_len(a.fs)
+    frame_len = a.frame_len
 
     f = kwiiyatta.feature(a)
 
     assert a is not f
     assert a.fs == f.fs
+    assert a.frame_period == frame_period
     assert a.frame_period == f.frame_period
+    assert a.frame_len == f.frame_len == frame_len
     assert a.spectrum_len == f.spectrum_len
     assert a.mel_cepstrum_order == f.mel_cepstrum_order
     assert feature.calc_diff(a.f0, f.f0) == 0

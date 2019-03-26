@@ -14,6 +14,10 @@ class WorldAnalyzer(abc.Analyzer):
         self._timeaxis = None
 
     @property
+    def frame_len(self):
+        return self.data.shape[0] * 1000 // self.fs // self.frame_period + 1
+
+    @property
     def spectrum_len(self):
         if self._spectrum_envelope is not None:
             return self._spectrum_envelope.shape[-1]

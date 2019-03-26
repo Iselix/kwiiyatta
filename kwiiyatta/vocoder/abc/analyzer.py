@@ -25,6 +25,11 @@ class Analyzer(Feature):
     def wavdata(self):
         return kwiiyatta.Wavdata(self.fs, self.data)
 
+    @property
+    @abc.abstractmethod
+    def frame_len(self):
+        raise NotImplementedError
+
     @abc.abstractmethod
     def extract_f0(self):
         raise NotImplementedError

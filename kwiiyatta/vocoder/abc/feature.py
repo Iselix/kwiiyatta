@@ -33,6 +33,10 @@ class Feature(abc.ABC):
         return self._mel_cepstrum.frame_period
 
     @property
+    def frame_len(self):
+        return self.f0.shape[0]
+
+    @property
     @abc.abstractmethod
     def spectrum_len(self):
         return self.Synthesizer.fs_spectrum_len(self.fs)
