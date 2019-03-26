@@ -2,6 +2,7 @@ import numpy as np
 
 import pyworld
 
+import kwiiyatta
 from kwiiyatta.wavfile import Wavdata
 
 from . import abc
@@ -55,15 +56,26 @@ class WorldAnalyzer(abc.Analyzer):
 
 class WorldSynthesizer(abc.Synthesizer):
     @staticmethod
-    def synthesize(feature):
-        feature.ascontiguousarray()
+    def reshape_feature(feature):
+        spectrum_len = feature.spectrum_len
+        msb = spectrum_len.bit_length()
+        reshape_spectrum_len = (1 << msb-1)
+        if reshape_spectrum_len < spectrum_len-1:
+            reshape_spectrum_len *= 2
+        return kwiiyatta.reshape(feature, reshape_spectrum_len+1)
+
+    @classmethod
+    def synthesize(cls, feature):
+        synth_feature = cls.reshape_feature(feature)
+        synth_feature.ascontiguousarray()
         return Wavdata(
-            feature.fs,
+            synth_feature.fs,
             pyworld.synthesize(
-                feature.f0,
-                feature.spectrum_envelope,
-                feature.aperiodicity,
-                feature.fs, feature.frame_period
+                synth_feature.f0,
+                synth_feature.spectrum_envelope,
+                synth_feature.aperiodicity,
+                synth_feature.fs,
+                synth_feature.frame_period
             ))
 
     @staticmethod

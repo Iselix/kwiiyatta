@@ -36,6 +36,8 @@ class Feature(abc.MutableFeature):
     def spectrum_len(self):
         if self._spectrum_envelope is not None:
             return self._spectrum_envelope.shape[-1]
+        if self._aperiodicity is not None:
+            return self._aperiodicity.shape[-1]
         return super().spectrum_len
 
     def _get_f0(self):
