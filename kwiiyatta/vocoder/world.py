@@ -1,3 +1,5 @@
+import numpy as np
+
 import pyworld
 
 from kwiiyatta.wavfile import Wavdata
@@ -8,6 +10,7 @@ from . import abc
 class WorldAnalyzer(abc.Analyzer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._data = np.ascontiguousarray(self._data)
         self._timeaxis = None
 
     @property
@@ -49,6 +52,7 @@ class WorldAnalyzer(abc.Analyzer):
 class WorldSynthesizer(abc.Synthesizer):
     @staticmethod
     def synthesize(feature):
+        feature.ascontiguousarray()
         return Wavdata(
             feature.fs,
             pyworld.synthesize(
