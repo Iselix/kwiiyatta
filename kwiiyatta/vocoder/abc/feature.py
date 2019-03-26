@@ -94,6 +94,10 @@ class Feature(abc.ABC):
     def mel_cepstrum(self):
         return self.extract_mel_cepstrum()
 
+    @abc.abstractmethod
+    def ascontiguousarray(self):
+        raise NotImplementedError
+
     def synthesize(self):
         return self.Synthesizer.synthesize(self)
 
@@ -176,3 +180,11 @@ class MutableFeature(Feature):
             if data is not None:
                 self._set_spectrum_envelope(None)
         self._mel_cepstrum.data = data
+
+    def ascontiguousarray(self):
+        self._set_f0(
+            np.ascontiguousarray(self.f0))
+        self._set_spectrum_envelope(
+            np.ascontiguousarray(self.spectrum_envelope))
+        self._set_aperiodicity(
+            np.ascontiguousarray(self.aperiodicity))

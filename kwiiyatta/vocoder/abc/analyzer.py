@@ -1,5 +1,7 @@
 import abc
 
+import numpy as np
+
 import kwiiyatta
 
 from .feature import Feature
@@ -43,3 +45,8 @@ class Analyzer(Feature):
 
     def _get_aperiodicity(self):
         return self.extract_aperiodicity()
+
+    def ascontiguousarray(self):
+        self._f0 = np.ascontiguousarray(self.f0)
+        self._spectrum_envelope = np.ascontiguousarray(self.spectrum_envelope)
+        self._aperiodicity = np.ascontiguousarray(self.aperiodicity)

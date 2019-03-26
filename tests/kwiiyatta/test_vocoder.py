@@ -51,6 +51,18 @@ def test_set_Analyzer_param():
     assert analyzer._aperiodicity is not None
     assert analyzer._aperiodicity is feature.aperiodicity
 
+    feature = feature[::2]
+    f = copy.copy(feature)
+    assert not feature.f0.flags['C_CONTIGUOUS']
+    assert not feature.spectrum_envelope.flags['C_CONTIGUOUS']
+    assert not feature.aperiodicity.flags['C_CONTIGUOUS']
+    feature.ascontiguousarray()
+    assert feature.f0.flags['C_CONTIGUOUS']
+    assert feature.spectrum_envelope.flags['C_CONTIGUOUS']
+    assert feature.aperiodicity.flags['C_CONTIGUOUS']
+    assert feature is not f
+    assert feature == f
+
     feature = kwiiyatta.feature(analyzer,
                                 mcep_order=analyzer.mel_cepstrum_order*2)
     assert analyzer is not feature

@@ -42,6 +42,9 @@ class WorldAnalyzer(abc.Analyzer):
             )
         return self._aperiodicity
 
+    def ascontiguousarray(self):
+        pass  # world で抽出した特徴量は既に C-contiguous
+
 
 class WorldSynthesizer(abc.Synthesizer):
     @staticmethod
