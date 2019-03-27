@@ -69,3 +69,10 @@ class WorldSynthesizer(abc.Synthesizer):
     @staticmethod
     def fs_spectrum_len(fs):
         return pyworld.get_cheaptrick_fft_size(fs) // 2 + 1
+
+    @classmethod
+    def _reshape_aperiodicity(cls, feature, fs, new_spectrum_len):
+        feature = np.ascontiguousarray(feature)
+        coded_ap = pyworld.code_aperiodicity(feature, fs)
+        return pyworld.decode_aperiodicity(coded_ap, fs,
+                                           (new_spectrum_len-1)*2)

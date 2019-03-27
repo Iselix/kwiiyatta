@@ -45,6 +45,17 @@ class Feature(abc.ABC):
     def _get_f0(self):
         raise NotImplementedError
 
+    def reshaped_spectrum_envelope(self, new_spectrum_len):
+        spec = self._get_spectrum_envelope()
+        if spec is None:
+            return self._mel_cepstrum.extract_spectrum(new_spectrum_len)
+        return self.Synthesizer.reshape_spectrum_envelope(
+            spec, self.fs, new_spectrum_len)
+
+    def reshaped_aperiodicity(self, new_spectrum_len):
+        return self.Synthesizer.reshape_aperiodicity(
+            self.aperiodicity, self.fs, new_spectrum_len)
+
     @property
     def f0(self):
         return self._get_f0()
@@ -141,6 +152,14 @@ class Feature(abc.ABC):
 class MutableFeature(Feature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def reshape(self, new_spectrum_len):
+        if self._get_spectrum_envelope().shape[1] != new_spectrum_len:
+            self._set_spectrum_envelope(
+                self.reshaped_spectrum_envelope(new_spectrum_len))
+        if self._get_aperiodicity().shape[1] != new_spectrum_len:
+            self._set_aperiodicity(
+                self.reshaped_aperiodicity(new_spectrum_len))
 
     @abc.abstractmethod
     def _set_f0(self, value):

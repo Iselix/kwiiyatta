@@ -4,7 +4,7 @@ from .converter import (MelCepstrumConverter, ParallelDataset, WavFileDataset,
                         align_dataset)
 from .filter import apply_mlsa_filter
 from .vocoder import (Analyzer, Feature, MelCepstrum, Synthesizer,
-                      align_even, analyze_wav, feature)
+                      align_even, analyze_wav, feature, reshape)
 from .wavfile import Wavdata, load_wav
 
 name = "kwiiyatta"
@@ -16,5 +16,5 @@ __all__ += ['MelCepstrumConverter', 'ParallelDataset', 'WavFileDataset',
             'align_dataset']
 __all__ += ['apply_mlsa_filter']
 __all__ += ['Analyzer', 'Feature', 'MelCepstrum', 'Synthesizer',
-            'align', 'align_even', 'analyze_wav', 'feature']
+            'align', 'align_even', 'analyze_wav', 'feature', 'reshape']
 __all__ += ['Wavdata', 'load_wav']

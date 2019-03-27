@@ -256,3 +256,49 @@ def test_resample(fs1, fs2, wavfile, frame_period):
 
     f0_diff = feature.calc_diff(a1.f0, a2.f0)
     assert_any.between(0.0012, f0_diff, 0.014)
+
+
+def test_reshape(check):
+    from kwiiyatta.vocoder.world import WorldAnalyzer
+    a1 = kwiiyatta.analyze_wav(dataset.CLB_WAV)
+    a2 = WorldAnalyzer.load_wav(dataset.CLB_WAV)
+    fft_size = (a1.spectrum_len - 1) * 2 * 2
+    a2.extract_spectrum_envelope(fft_size=fft_size)
+    a2.extract_aperiodicity(fft_size=fft_size)
+
+    assert a1.spectrum_len != a2.spectrum_len
+
+    f2_r = kwiiyatta.reshape(a2, a1.spectrum_len)
+    assert f2_r.spectrum_len == a1.spectrum_len
+
+    f2 = kwiiyatta.feature(a2)
+    assert f2.spectrum_len != f2_r.spectrum_len
+
+    assert (feature.calc_powered_diff(
+        f2_r.spectrum_envelope,
+        f2.reshaped_spectrum_envelope(a1.spectrum_len))
+            == 0)
+    assert (feature.calc_diff(f2_r.aperiodicity,
+                              f2.reshaped_aperiodicity(a1.spectrum_len))
+            == 0)
+
+    _, spec_diff, ape_diff, mcep_diff = feature.calc_feature_diffs(a1, f2_r)
+    check.round_equal(0.0024, spec_diff)
+    check.round_equal(0.00087, ape_diff)
+    check.round_equal(0.0020, mcep_diff)
+
+    a1._spectrum_envelope = None
+    a1._aperiodicity = None
+    spec_diff = feature.calc_powered_diff(
+        a2.spectrum_envelope, a1.reshaped_spectrum_envelope(f2.spectrum_len))
+    check.round_equal(0.0025, spec_diff)
+    ape_diff = feature.calc_diff(
+        a2.aperiodicity, a1.reshaped_aperiodicity(f2.spectrum_len))
+    check.round_equal(0.00088, ape_diff)
+
+    f1 = kwiiyatta.feature(a1)
+    f1.extract_mel_cepstrum()
+    f1.spectrum_envelope = None
+    spec_diff = feature.calc_powered_diff(
+        a2.spectrum_envelope, f1.reshaped_spectrum_envelope(a2.spectrum_len))
+    check.round_equal(0.090, spec_diff)
