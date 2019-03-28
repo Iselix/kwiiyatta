@@ -99,18 +99,18 @@ def test_voice_conversion(tmpdir, setup_func, target_fs):
     act_diff = kwiiyatta.analyze_wav(result_root/'arctic_a0009.diff.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_diff)
-    assert_any.between(0.065, f0_diff, 0.12)
-    assert_any.between(0.42, spec_diff, 0.46)
-    assert_any.between(0.046, ape_diff, 0.052)
-    assert_any.between(0.11, mcep_diff, 0.17)
+    assert_any.between(0.059, f0_diff, 0.12)
+    assert_any.between(0.40, spec_diff, 0.44)
+    assert_any.between(0.045, ape_diff, 0.055)
+    assert_any.between(0.071, mcep_diff, 0.098)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_synth)
     assert_any.between(0.10, f0_diff, 0.12)
-    assert_any.between(0.44, spec_diff, 0.51)
-    assert_any.between(0.078, ape_diff, 0.093)
-    assert_any.between(0.11, mcep_diff, 0.17)
+    assert_any.between(0.42, spec_diff, 0.50)
+    assert_any.between(0.079, ape_diff, 0.094)
+    assert_any.between(0.072, mcep_diff, 0.10)
 
 
 @pytest.mark.assert_any
@@ -147,10 +147,10 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.048, f0_diff, 0.10)
-        assert_any.between(0.44, spec_diff, 0.47)
-        assert_any.between(0.040, ape_diff, 0.068)
-        assert_any.between(0.16, mcep_diff, 0.17)
+        assert_any.between(0.066, f0_diff, 0.10)
+        assert_any.between(0.45, spec_diff, 0.47)
+        assert_any.between(0.044, ape_diff, 0.059)
+        assert_any.between(0.092, mcep_diff, 0.097)
 
     for result in results:
         result_path = (result_root/result).with_suffix('.synth.wav')
@@ -161,7 +161,7 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.064, f0_diff, 0.084)
-        assert_any.between(0.44, spec_diff, 0.50)
-        assert_any.between(0.099, ape_diff, 0.13)
-        assert_any.between(0.16, mcep_diff, 0.18)
+        assert_any.between(0.060, f0_diff, 0.084)
+        assert_any.between(0.44, spec_diff, 0.51)
+        assert_any.between(0.10, ape_diff, 0.13)
+        assert_any.between(0.095, mcep_diff, 0.098)

@@ -126,7 +126,7 @@ def test_analyze_difffile(check):
     check.round_equal(0.63, f0_diff)
     check.round_equal(1.0, spec_diff)
     check.round_equal(0.49, ape_diff)
-    check.round_equal(0.47, mcep_diff)
+    check.round_equal(0.27, mcep_diff)
 
 
 @pytest.mark.assert_any
@@ -158,7 +158,7 @@ def test_reanalyze(wavfile, dtype, fs, frame_period):
     assert_any.between(0.052, f0_diff, 0.094)
     assert_any.between(0.20, spec_diff, 0.22)
     assert_any.between(0.062, ape_diff, 0.097)
-    assert_any.between(0.045, mcep_diff, 0.10)
+    assert_any.between(0.029, mcep_diff, 0.055)
 
 
 def test_feature():
@@ -283,15 +283,15 @@ def test_reshape(check):
             == 0)
 
     _, spec_diff, ape_diff, mcep_diff = feature.calc_feature_diffs(a1, f2_r)
-    check.round_equal(0.0024, spec_diff)
+    check.round_equal(0.0025, spec_diff)
     check.round_equal(0.00087, ape_diff)
-    check.round_equal(0.0020, mcep_diff)
+    check.round_equal(0.0012, mcep_diff)
 
     a1._spectrum_envelope = None
     a1._aperiodicity = None
     spec_diff = feature.calc_powered_diff(
         a2.spectrum_envelope, a1.reshaped_spectrum_envelope(f2.spectrum_len))
-    check.round_equal(0.0025, spec_diff)
+    check.round_equal(0.0038, spec_diff)
     ape_diff = feature.calc_diff(
         a2.aperiodicity, a1.reshaped_aperiodicity(f2.spectrum_len))
     check.round_equal(0.00088, ape_diff)

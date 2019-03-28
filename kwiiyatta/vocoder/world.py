@@ -40,6 +40,8 @@ class WorldAnalyzer(abc.Analyzer):
                 self.data, self.f0, self._timeaxis, self.fs,
                 **kwargs
             )
+            # World のスペクトル包絡のパワーはサンプリングレートに比例する？
+            self._spectrum_envelope /= self.fs
         return self._spectrum_envelope
 
     def extract_aperiodicity(self, **kwargs):
@@ -72,7 +74,7 @@ class WorldSynthesizer(abc.Synthesizer):
             synth_feature.fs,
             pyworld.synthesize(
                 synth_feature.f0,
-                synth_feature.spectrum_envelope,
+                synth_feature.spectrum_envelope * synth_feature.fs,
                 synth_feature.aperiodicity,
                 synth_feature.fs,
                 synth_feature.frame_period
