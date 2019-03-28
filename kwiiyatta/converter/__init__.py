@@ -6,12 +6,12 @@ from .gmm import GMMFeatureConverter
 from .mcep import MelCepstrumDataset, MelCepstrumFeatureConverter
 
 
-def MelCepstrumConverter(use_delta=True, Converter=GMMFeatureConverter,
-                         **kwargs):
+def MelCepstrumConverter(use_delta=True, mcep_fs=None,
+                         Converter=GMMFeatureConverter, **kwargs):
     converter = Converter(**kwargs)
     if use_delta:
         converter = DeltaFeatureConverter(converter)
-    return MelCepstrumFeatureConverter(converter)
+    return MelCepstrumFeatureConverter(converter, mcep_fs=mcep_fs)
 
 
 def align_dataset(parallel_dataset):

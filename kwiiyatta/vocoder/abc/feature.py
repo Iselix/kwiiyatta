@@ -237,8 +237,10 @@ class MutableFeature(Feature):
         if data is not None:
             if isinstance(data, MelCepstrum):
                 if data.fs != self.fs:
-                    raise ValueError("MelCepstrum.fs is mismatch")
-                data = data.data
+                    data = data.resample_data(self.fs,
+                                              Synthesizer=self.Synthesizer)
+                else:
+                    data = data.data
             elif not isinstance(data, np.ndarray):
                 raise TypeError('Feature.mel_cepstrum should be a MelCepstrum'
                                 ' or ndarray')

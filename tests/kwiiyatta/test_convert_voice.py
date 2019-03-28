@@ -3,6 +3,8 @@ import pathlib
 import shutil
 import sys
 
+import numpy as np
+
 import pytest
 
 import kwiiyatta
@@ -60,15 +62,28 @@ def setup_dtype_dataset(src_dir):
             ), src_dir)
 
 
+def setup_fs_dataset(src_dir):
+    for num, fs in zip(range(1, 9),
+                       itertools.chain(dataset.FS,
+                                       itertools.repeat(16000))):
+        shutil.copy(
+            dataset.get_wav_path(
+                dataset.CLB_DIR/f'arctic_a{num:04}.wav',
+                fs=fs,
+            ), src_dir)
+
+
 @pytest.mark.assert_any
 @pytest.mark.parametrize(
-    'setup_func,target_fs',
+    'setup_func,target_fs,test_fs',
     [
-        (setup_dataset,       16000),
-        (setup_44_dataset,    44100),
-        (setup_dtype_dataset, 16000),
+        (setup_dataset,       16000, 16000),
+        (setup_44_dataset,    44100, 44100),
+        (setup_dataset,       16000, 44100),
+        (setup_dtype_dataset, 16000, 16000),
+        (setup_fs_dataset,    16000, 16000),
     ])
-def test_voice_conversion(tmpdir, setup_func, target_fs):
+def test_voice_conversion(tmpdir, setup_func, target_fs, test_fs):
     tmp_path = pathlib.Path(tmpdir)
     result_root = tmp_path/'result'
     src_dir = tmp_path/'src'
@@ -87,21 +102,22 @@ def test_voice_conversion(tmpdir, setup_func, target_fs):
             '--converter-components', '1',
             '--max-files', '8',
             str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0009.wav',
-                                     fs=target_fs)),
+                                     fs=test_fs)),
         ]
+    np.random.seed(0)
     cv.main()
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
     assert (result_root/'arctic_a0009.synth.wav').is_file()
 
-    expected = make_expected_feature('arctic_a0009.wav', fs=target_fs)
+    expected = make_expected_feature('arctic_a0009.wav', fs=test_fs)
 
     act_diff = kwiiyatta.analyze_wav(result_root/'arctic_a0009.diff.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_diff)
-    assert_any.between(0.059, f0_diff, 0.12)
-    assert_any.between(0.40, spec_diff, 0.44)
-    assert_any.between(0.045, ape_diff, 0.055)
+    assert_any.between(0.045, f0_diff, 0.12)
+    assert_any.between(0.40, spec_diff, 0.48)
+    assert_any.between(0.041, ape_diff, 0.055)
     assert_any.between(0.071, mcep_diff, 0.098)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
@@ -109,7 +125,7 @@ def test_voice_conversion(tmpdir, setup_func, target_fs):
         feature.calc_feature_diffs(expected, act_synth)
     assert_any.between(0.10, f0_diff, 0.12)
     assert_any.between(0.42, spec_diff, 0.50)
-    assert_any.between(0.079, ape_diff, 0.094)
+    assert_any.between(0.073, ape_diff, 0.094)
     assert_any.between(0.072, mcep_diff, 0.10)
 
 
@@ -134,6 +150,7 @@ def test_voice_conversion_fullset(tmpdir):
             str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0003.wav',
                                      fullset=True)),
         ]
+    np.random.seed(0)
     cv.main()
 
     results = ['arctic_a0001', 'arctic_a0002', 'arctic_a0003']

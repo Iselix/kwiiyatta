@@ -30,6 +30,9 @@ class Config:
             '--skip-files', type=int,
             help='Skip file num to train feature converter')
         self.parser.add_argument(
+            '--mcep-fs', type=int,
+            help='Sampling rate of training mel cepstrum')
+        self.parser.add_argument(
             '--converter-components', type=int, default=64,
             help='Components num for feature converter')
         self.parser.add_argument(
@@ -61,6 +64,8 @@ class Config:
             kwargs['random_state'] = self.converter_seed
         if 'components' not in kwargs:
             kwargs['components'] = self.converter_components
+        if 'mcep_fs' not in kwargs and self.mcep_fs is not None:
+            kwargs['mcep_fs'] = self.mcep_fs
         return Converter(**kwargs)
 
     @property

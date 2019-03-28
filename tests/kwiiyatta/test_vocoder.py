@@ -3,6 +3,8 @@ import itertools
 
 from nnmnkwii.preprocessing.alignment import DTWAligner
 
+import numpy as np
+
 import pytest
 
 import kwiiyatta
@@ -306,6 +308,7 @@ def test_resample_down(fs1, fs2, wavfile, frame_period):
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
 @pytest.mark.parametrize('frame_period', FRAME_PERIODS)
 def test_resample_up(fs1, fs2, wavfile, frame_period):
+    np.random.seed(0)
     if fs1 < fs2:
         fs1, fs2 = fs2, fs1
     a1 = feature.get_analyzer(dataset.get_wav_path(wavfile, fs=fs1),
