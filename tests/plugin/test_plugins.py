@@ -1,9 +1,37 @@
-from tests.plugin import assert_any
+import pytest
+
+from tests.plugin import assert_any, run_one_param
 
 
 conftest_assert_any = """
 pytest_plugins = ['tests.plugin.assert_any']
 """
+
+conftest_run_one_param = """
+pytest_plugins = ['tests.plugin.run_one_param']
+"""
+
+pyfile_run_one_param = """
+import pytest
+
+
+@pytest.mark.parametrize('val', range(3))
+def test_parametrized(val):
+    pass
+"""
+
+
+orig_run_one_param_active = None
+
+
+def setup_module(module):
+    global orig_run_one_param_active
+    orig_run_one_param_active = run_one_param.active
+    run_one_param.active = True
+
+
+def teardown_module(module):
+    run_one_param.active = orig_run_one_param_active
 
 
 def test_assert_any(testdir):
@@ -430,3 +458,95 @@ def test_parametrized3(assert_any, val):
     result = testdir.runpytest('--lf')
 
     result.assert_outcomes(passed=3, failed=2)
+
+
+@pytest.mark.parametrize('dummy', range(10))
+def test_run_one_param(testdir, dummy):
+    testdir.makeconftest(conftest_run_one_param)
+    testdir.makepyfile(pyfile_run_one_param)
+
+    result = testdir.runpytest()
+
+    result.assert_outcomes(passed=1, skipped=2)
+
+
+def test_run_all_params(testdir):
+    testdir.makeconftest(conftest_run_one_param)
+    testdir.makepyfile(pyfile_run_one_param)
+
+    result = testdir.runpytest('--run-all-params')
+
+    result.assert_outcomes(passed=3)
+
+
+def test_run_one_param_with_lf(testdir):
+    testdir.makeconftest(conftest_run_one_param)
+
+    testdir.makepyfile("""
+import pytest
+
+
+@pytest.mark.parametrize('val', range(3))
+def test_parametrized(val):
+    assert False
+""")
+
+    result = testdir.runpytest()
+
+    result.assert_outcomes(failed=1, skipped=2)
+
+    result = testdir.runpytest('--lf')
+
+    result.assert_outcomes(failed=1)
+
+    result = testdir.runpytest('--run-all-params')
+
+    result.assert_outcomes(failed=3)
+
+    result = testdir.runpytest('--lf')
+
+    result.assert_outcomes(failed=3)
+
+
+def test_assert_any_with_run_one_param(testdir):
+    testdir.makeconftest("""
+pytest_plugins = [
+    'tests.plugin.run_one_param',
+    'tests.plugin.assert_any',
+]
+""")
+
+    testdir.makepyfile("""
+import pytest
+
+
+@pytest.mark.parametrize('val', range(3))
+def test_parametrized(assert_any, val):
+    assert_any.between(0, 1, 2)
+""")
+
+    result = testdir.runpytest('-rs')
+
+    result.assert_outcomes(passed=1, skipped=3)
+
+
+def test_assert_any_with_run_one_param_failed(testdir):
+    testdir.makeconftest("""
+pytest_plugins = [
+    'tests.plugin.run_one_param',
+    'tests.plugin.assert_any',
+]
+""")
+
+    testdir.makepyfile("""
+import pytest
+
+
+@pytest.mark.parametrize('val', range(3))
+def test_parametrized(assert_any, val):
+    assert_any.between(1, 0, 2)
+""")
+
+    result = testdir.runpytest('-rs')
+
+    result.assert_outcomes(passed=1, skipped=2, failed=1)

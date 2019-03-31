@@ -5,6 +5,7 @@ import tests
 
 
 CONFTEST_PATH = pathlib.Path(__file__).parent/'conftest.py'
+PYTEST_ARGS = ['--run-all-params']
 
 orig_skip_fullset = None
 
@@ -45,7 +46,7 @@ def test_check(check, expect, actual):
     check.round_equal(expect, actual)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(passed=12)
 
@@ -77,7 +78,7 @@ def test_check(check, expect, actual):
     check.round_equal(expect, actual)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(failed=12)
 
@@ -103,7 +104,7 @@ def test_check(check, sig_dig, expect, actual):
     check.round_equal(expect, actual, sig_dig=sig_dig)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(passed=6)
 
@@ -129,7 +130,7 @@ def test_check(check, sig_dig, expect, actual):
     check.round_equal(expect, actual, sig_dig=sig_dig)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(failed=6)
 
@@ -155,7 +156,7 @@ def test_check(check, eps, expect, actual):
     check.round_equal(expect, actual, eps=eps)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(passed=6)
 
@@ -181,6 +182,6 @@ def test_check(check, eps, expect, actual):
     check.round_equal(expect, actual, eps=eps)
 """)
 
-    result = testdir.runpytest()
+    result = testdir.runpytest(*PYTEST_ARGS)
 
     result.assert_outcomes(failed=6)

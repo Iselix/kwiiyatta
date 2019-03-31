@@ -7,6 +7,7 @@ import pytest_check
 
 pytest_plugins = [
     'pytester',
+    'tests.plugin.run_one_param',
     'tests.plugin.assert_any',
 ]
 
@@ -31,6 +32,8 @@ def pytest_collection_modifyitems(config, items):
             return
     tests._skip_fullset = not (run_all_tests
                                or config.getoption("--run-fullset"))
+    if run_all_tests:
+        tests.plugin.run_one_param.active = False
     if run_all_tests or config.getoption("--run-slow"):
         # --runslow given in cli: do not skip slow tests
         return
