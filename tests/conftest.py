@@ -12,16 +12,26 @@ pytest_plugins = [
 
 
 def pytest_addoption(parser):
+    parser.addoption("--run-all", action="store_true", default=False,
+                     help="run all tests")
     parser.addoption("--run-slow", action="store_true", default=False,
                      help="run slow tests")
+    parser.addoption("--run-fullset", action="store_true", default=False,
+                     help="run tests using fullset data")
 
 
 def pytest_collection_modifyitems(config, items):
+    import tests
+
+    run_all_tests = config.getoption('--run-all')
+    tests._skip_fullset = False
     if config.getoption('--lf'):
         lfplugin = config.pluginmanager.get_plugin('lfplugin')
         if len(lfplugin.lastfailed) > 0:
             return
-    if config.getoption("--run-slow"):
+    tests._skip_fullset = not (run_all_tests
+                               or config.getoption("--run-fullset"))
+    if run_all_tests or config.getoption("--run-slow"):
         # --runslow given in cli: do not skip slow tests
         return
     skip_slow = pytest.mark.skip(reason="need --run-slow option to run")

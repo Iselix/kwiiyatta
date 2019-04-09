@@ -102,3 +102,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# fullset data for unittest
+/tests/data/fullset/

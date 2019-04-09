@@ -1,8 +1,21 @@
 import pathlib
 import shutil
 
+import tests
+
 
 CONFTEST_PATH = pathlib.Path(__file__).parent/'conftest.py'
+
+orig_skip_fullset = None
+
+
+def setup_module(module):
+    global orig_skip_fullset
+    orig_skip_fullset = tests._skip_fullset
+
+
+def teardown_module(module):
+    tests._skip_fullset = orig_skip_fullset
 
 
 def test_check_round_equal_passed(testdir):
