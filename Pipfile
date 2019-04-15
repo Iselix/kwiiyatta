@@ -11,6 +11,7 @@ kwiiyatta = {editable = true, path = "."}
 "flake8-import-order" = "*"
 pytest = "*"
 pytest-check = "*"
+pyinstaller = "*"
 
 [requires]
 python_version = "3.6"
