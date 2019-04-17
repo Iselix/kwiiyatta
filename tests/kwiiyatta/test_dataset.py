@@ -1,3 +1,4 @@
+import copy
 import itertools
 import pathlib
 
@@ -6,7 +7,7 @@ import numpy as np
 import pytest
 
 import kwiiyatta
-from kwiiyatta.converter import TrimmedDataset
+from kwiiyatta.converter import MelCepstrumDataset, TrimmedDataset
 
 from tests import dataset, feature
 
@@ -24,6 +25,10 @@ def test_dataset():
         assert (expected.spectrum_envelope == actual.spectrum_envelope).all()
         assert (expected.aperiodicity == actual.aperiodicity).all()
         assert (expected.mel_cepstrum.data == actual.mel_cepstrum.data).all()
+
+    mcep_dataset = MelCepstrumDataset(clb_dataset)
+    expected = kwiiyatta.analyze_wav(dataset.CLB_WAV).mel_cepstrum.data[:, 1:]
+    assert (expected == mcep_dataset['arctic_a0001.wav']).all()
 
 
 @pytest.mark.parametrize('fullset_clb, fullset_slt, fullset_expected',
@@ -57,6 +62,11 @@ def test_parallel_dataset(fullset_clb, fullset_slt, fullset_expected):
     assert clb_data == p_clb_data
     assert slt_data == p_slt_data
 
+    mcep_dataset = MelCepstrumDataset(parallel_dataset)
+    m_clb_data, m_slt_data = mcep_dataset['arctic_a0001.wav']
+    assert (clb_data.mel_cepstrum.data[:, 1:] == m_clb_data).all()
+    assert (slt_data.mel_cepstrum.data[:, 1:] == m_slt_data).all()
+
 
 @pytest.mark.xfail(strict=True,
                    reason='Trim position of TrimmedDataset is shifted')
@@ -80,3 +90,25 @@ def test_trimmed_dataset():
     assert len_d == len_f-64
     assert np.abs(d['f'].spectrum_envelope[0]).sum() > 0
     assert np.abs(d['f'].spectrum_envelope[-1]).sum() > 0
+
+
+def test_mcep_dataset():
+    a = kwiiyatta.feature(feature.get_analyzer(dataset.CLB_WAV))
+    base = {'order24': copy.copy(a)}
+    base['order32'] = copy.copy(a)
+    base['order32'].mel_cepstrum_order = 32
+    base['fs44'] = copy.copy(a)
+    base['fs44'].mel_cepstrum._fs = 44100
+
+    mcep_dataset = MelCepstrumDataset(base)
+
+    mcep_dataset['order24']
+    with pytest.raises(ValueError) as e:
+        mcep_dataset['order32']
+
+    assert 'order of "order32" is 32 but others are 24' == str(e.value)
+
+    with pytest.raises(ValueError) as e:
+        mcep_dataset['fs44']
+
+    assert 'fs of "fs44" is 44100 but others are 16000' == str(e.value)
