@@ -1,5 +1,5 @@
-from .dataset import WavFileDataset
+from .dataset import ParallelDataset, WavFileDataset
 
 
 __all__ = []
-__all__ += ['WavFileDataset']
+__all__ += ['ParallelDataset', 'WavFileDataset']

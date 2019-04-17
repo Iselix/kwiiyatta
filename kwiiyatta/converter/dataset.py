@@ -24,3 +24,17 @@ class WavFileDataset(abc.Dataset):
 
     def get_data(self, key):
         return self.Analyzer(self.data_dir/key)
+
+
+class ParallelDataset(abc.Dataset):
+    def __init__(self, dataset1, dataset2):
+        super().__init__()
+        self.dataset1 = dataset1
+        self.dataset2 = dataset2
+        self.common_keys = self.dataset1.keys() & self.dataset2.keys()
+
+    def keys(self):
+        return self.common_keys
+
+    def get_data(self, key):
+        return self.dataset1[key], self.dataset2[key]
