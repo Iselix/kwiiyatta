@@ -1,4 +1,8 @@
-from nnmnkwii.preprocessing import trim_zeros_frames
+import copy
+
+from nnmnkwii.preprocessing import remove_zeros_frames, trim_zeros_frames
+
+import numpy as np
 
 import kwiiyatta
 
@@ -52,3 +56,22 @@ def TrimmedDataset(feature):
 def AlignedDataset(features):
     a, b = features
     return kwiiyatta.align_even(a, b)
+
+
+def make_dataset_to_array(dataset, keys=None):
+    if keys is None:
+        keys = sorted(dataset.keys())
+
+    data = None
+    for key in keys:
+        d = dataset[key]
+        if isinstance(d, tuple):
+            d = np.hstack(d)
+        d = remove_zeros_frames(d)
+        if data is None:
+            data = copy.copy(d)
+        else:
+            len_data = len(data)
+            data.resize(len_data+len(d), d.shape[-1])
+            data[len_data:, :] = d
+    return data

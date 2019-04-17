@@ -8,9 +8,12 @@ import numpy as np
 
 import pytest
 
+from sklearn.model_selection import train_test_split
+
 import kwiiyatta
-from kwiiyatta.converter import (DeltaFeatureDataset, MelCepstrumDataset,
-                                 TrimmedDataset)
+from kwiiyatta.converter import (AlignedDataset, DeltaFeatureDataset,
+                                 MelCepstrumDataset, TrimmedDataset,
+                                 make_dataset_to_array)
 from kwiiyatta.converter.delta import DELTA_WINDOWS
 
 from tests import dataset, feature
@@ -136,3 +139,96 @@ def test_delta_dataset():
         delta_dataset['fp3']
 
     assert 'frame_period of "fp3" is 3 but others are 5' == str(e.value)
+
+
+def make_expected_dataset(data_root, use_delta):
+    from pathlib import Path
+    from nnmnkwii.datasets import PaddedFileSourceDataset
+    from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
+    from nnmnkwii.metrics import melcd
+    from nnmnkwii.preprocessing import (delta_features, remove_zeros_frames,
+                                        trim_zeros_frames)
+    from nnmnkwii.preprocessing.alignment import DTWAligner
+    from nnmnkwii.util import apply_each2d_trim
+
+    max_files = 100  # number of utterances to be used.
+    test_size = 0.03
+
+    windows = DELTA_WINDOWS
+
+    class MyFileDataSource(CMUArcticWavFileDataSource):
+        def __init__(self, *args, **kwargs):
+            super(MyFileDataSource, self).__init__(*args, **kwargs)
+            self.test_paths = None
+
+        def collect_files(self):
+            paths = [Path(path) for path in super(
+                MyFileDataSource, self).collect_files()]
+            paths_train, paths_test = train_test_split(
+                paths, test_size=test_size, random_state=1234)
+
+            # keep paths for later testing
+            self.test_paths = paths_test
+
+            return paths_train
+
+        def collect_features(self, path):
+            feature = kwiiyatta.analyze_wav(path)
+            s = trim_zeros_frames(feature.spectrum_envelope)
+            return feature.mel_cepstrum.data[:len(s)]  # トリムするフレームが手前にずれてるのでは？
+
+    clb_source = MyFileDataSource(data_root=data_root,
+                                  speakers=["clb"], max_files=max_files)
+    slt_source = MyFileDataSource(data_root=data_root,
+                                  speakers=["slt"], max_files=max_files)
+
+    X = PaddedFileSourceDataset(clb_source, 1200).asarray()
+    Y = PaddedFileSourceDataset(slt_source, 1200).asarray()
+
+    # Alignment
+    X_aligned, Y_aligned = DTWAligner(verbose=0, dist=melcd).transform((X, Y))
+
+    # Drop 1st (power) dimension
+    X_aligned, Y_aligned = X_aligned[:, :, 1:], Y_aligned[:, :, 1:]
+
+    if use_delta:
+        X_aligned = apply_each2d_trim(delta_features, X_aligned, windows)
+        Y_aligned = apply_each2d_trim(delta_features, Y_aligned, windows)
+
+    XY = (np.concatenate((X_aligned, Y_aligned), axis=-1)
+          .reshape(-1, X_aligned.shape[-1]*2))
+
+    return remove_zeros_frames(XY)
+
+
+@pytest.mark.parametrize('fullset_clb, fullset_slt, fullset_expected',
+                         [
+                             (False, False, False),
+                             (False, True,  False),
+                             pytest.param(True, True, True,
+                                          marks=pytest.mark.slow),
+                         ])
+@pytest.mark.parametrize('use_delta', [False, True])
+def test_dataset_array(fullset_clb, fullset_slt, fullset_expected, use_delta):
+    clb = dataset.get_dataset_path(dataset.CLB_DIR, fullset_clb)
+    slt = dataset.get_dataset_path(dataset.SLT_DIR, fullset_slt)
+
+    d1 = kwiiyatta.WavFileDataset(clb)
+    d2 = kwiiyatta.WavFileDataset(slt)
+    parallel_dataset = \
+        MelCepstrumDataset(
+            AlignedDataset(
+                TrimmedDataset(
+                    kwiiyatta.ParallelDataset(d1, d2))))
+    if use_delta:
+        parallel_dataset = DeltaFeatureDataset(parallel_dataset)
+
+    keys, _ = train_test_split(sorted(parallel_dataset.keys())[:100],
+                               test_size=0.03, random_state=1234)
+
+    expected = make_expected_dataset(
+        dataset.FULLSET_ROOT if fullset_expected else dataset.DATASET_ROOT,
+        use_delta
+    )
+    actual = make_dataset_to_array(parallel_dataset, keys)
+    assert np.abs(expected - actual).max() < 1e-6
