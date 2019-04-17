@@ -2,12 +2,16 @@ import copy
 import itertools
 import pathlib
 
+from nnmnkwii.preprocessing import delta_features
+
 import numpy as np
 
 import pytest
 
 import kwiiyatta
-from kwiiyatta.converter import MelCepstrumDataset, TrimmedDataset
+from kwiiyatta.converter import (DeltaFeatureDataset, MelCepstrumDataset,
+                                 TrimmedDataset)
+from kwiiyatta.converter.delta import DELTA_WINDOWS
 
 from tests import dataset, feature
 
@@ -112,3 +116,23 @@ def test_mcep_dataset():
         mcep_dataset['fs44']
 
     assert 'fs of "fs44" is 44100 but others are 16000' == str(e.value)
+
+
+def test_delta_dataset():
+    base = {'fp5': feature.get_analyzer(dataset.CLB_WAV),
+            'fp5_2': feature.get_analyzer(dataset.CLB_WAV2),
+            'fp3': feature.get_analyzer(dataset.CLB_WAV, frame_period=3)}
+
+    mcep_dataset = MelCepstrumDataset(base)
+    delta_dataset = DeltaFeatureDataset(mcep_dataset)
+
+    assert (delta_dataset['fp5']
+            == delta_features(mcep_dataset['fp5'], DELTA_WINDOWS)).all()
+
+    assert (delta_dataset['fp5_2']
+            == delta_features(mcep_dataset['fp5_2'], DELTA_WINDOWS)).all()
+
+    with pytest.raises(ValueError) as e:
+        delta_dataset['fp3']
+
+    assert 'frame_period of "fp3" is 3 but others are 5' == str(e.value)
