@@ -6,9 +6,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
-from kwiiyatta.converter import (AlignedDataset, DeltaFeatureConverter,
-                                 GMMFeatureConverter,
-                                 MelCepstrumFeatureConverter, TrimmedDataset)
+from kwiiyatta.converter import AlignedDataset, TrimmedDataset
 
 
 conf = kwiiyatta.Config()
@@ -47,10 +45,8 @@ dataset = \
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
-converter = GMMFeatureConverter(random_state=GMM_RANDOM_SEED)
-if use_delta:
-    converter = DeltaFeatureConverter(converter)
-converter = MelCepstrumFeatureConverter(converter)
+converter = kwiiyatta.MelCepstrumConverter(
+    use_delta=use_delta, random_state=GMM_RANDOM_SEED)
 
 converter.train(dataset, train_paths)
 

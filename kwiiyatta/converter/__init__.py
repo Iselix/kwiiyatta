@@ -6,7 +6,15 @@ from .gmm import GMMFeatureConverter
 from .mcep import MelCepstrumDataset, MelCepstrumFeatureConverter
 
 
-__all__ = []
+def MelCepstrumConverter(use_delta=True, Converter=GMMFeatureConverter,
+                         **kwargs):
+    converter = Converter(**kwargs)
+    if use_delta:
+        converter = DeltaFeatureConverter(converter)
+    return MelCepstrumFeatureConverter(converter)
+
+
+__all__ = ['MelCepstrumConverter']
 __all__ += ['AlignedDataset', 'ParallelDataset', 'TrimmedDataset',
             'WavFileDataset',
             'make_dataset_to_array']
