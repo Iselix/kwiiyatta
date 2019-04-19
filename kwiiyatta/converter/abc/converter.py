@@ -27,6 +27,8 @@ class MapFeatureConverter(FeatureConverter):
 
     @abc.abstractmethod
     def convert(self, feature, raw=None, **kwargs):
+        if raw is None:
+            raw = feature
         if isinstance(self.base, MapFeatureConverter):
             return self.base.convert(feature, raw, **kwargs)
         return self.base.convert(feature, **kwargs)

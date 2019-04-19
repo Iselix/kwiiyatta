@@ -1,7 +1,11 @@
+import copy
+
 import pytest
 
+import kwiiyatta
 import kwiiyatta.converter.abc as converter_abc
-from kwiiyatta.converter import DeltaFeatureConverter, MelCepstrumDataset
+from kwiiyatta.converter import (DeltaFeatureConverter, MelCepstrumDataset,
+                                 MelCepstrumFeatureConverter)
 
 from tests import dataset, feature
 
@@ -28,3 +32,25 @@ def test_delta_converter():
 
     mcep = a.mel_cepstrum.data[:, 1:]
     assert (mcep == delta_converter.convert(mcep, a)).all()
+
+
+def test_mcep_converter():
+    a = kwiiyatta.feature(feature.get_analyzer(dataset.CLB_WAV))
+    base = {'key': copy.copy(a)}
+    mcep_converter = MelCepstrumFeatureConverter(NopConverter())
+    mcep_converter.train(base, ['key'])
+    mcep = feature.get_analyzer(dataset.CLB_WAV).mel_cepstrum
+
+    with pytest.raises(ValueError) as e:
+        a.mel_cepstrum_order = 32
+        mcep_converter.convert(a.mel_cepstrum)
+
+    assert 'order is expected to 24 but 32' == str(e.value)
+
+    with pytest.raises(ValueError) as e:
+        a.mel_cepstrum_order = 24
+        mcep = a.mel_cepstrum
+        mcep._fs = 44100
+        mcep_converter.convert(mcep)
+
+    assert 'fs is expected to 16000 but 44100' == str(e.value)

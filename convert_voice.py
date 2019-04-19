@@ -1,17 +1,14 @@
 # Voice conversion
 # by https://r9y9.github.io/nnmnkwii/v0.0.17/nnmnkwii_gallery/notebooks/vc/01-GMM%20voice%20conversion%20(en).html  # noqa
 
-import copy
 from pathlib import Path
-
-import numpy as np
 
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
 from kwiiyatta.converter import (AlignedDataset, DeltaFeatureConverter,
-                                 GMMFeatureConverter, MelCepstrumDataset,
-                                 TrimmedDataset)
+                                 GMMFeatureConverter,
+                                 MelCepstrumFeatureConverter, TrimmedDataset)
 
 
 conf = kwiiyatta.Config()
@@ -44,16 +41,16 @@ src_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_clb_arctic'/'wav')
 tgt_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_slt_arctic'/'wav')
 
 dataset = \
-    MelCepstrumDataset(
-        AlignedDataset(
-            TrimmedDataset(
-                kwiiyatta.ParallelDataset(src_dataset, tgt_dataset))))
+    AlignedDataset(
+        TrimmedDataset(
+            kwiiyatta.ParallelDataset(src_dataset, tgt_dataset)))
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
 converter = GMMFeatureConverter(random_state=GMM_RANDOM_SEED)
 if use_delta:
     converter = DeltaFeatureConverter(converter)
+converter = MelCepstrumFeatureConverter(converter)
 
 converter.train(dataset, train_paths)
 
@@ -61,14 +58,8 @@ converter.train(dataset, train_paths)
 def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
     src = conf.create_analyzer(src_path, Analyzer=kwiiyatta.analyze_wav)
 
-    mcep = copy.copy(src.mel_cepstrum)
-    c0, mc = mcep.data[:, 0], mcep.data[:, 1:]
-    dim = mc.shape[-1]
-    mc = converter.convert(mc, raw=mcep, mlpg=not disable_mlpg, diff=diffvc)
-    if disable_mlpg and mc.shape[-1] != dim:
-        mc = mc[:, :dim]
-    assert mc.shape[-1] == dim
-    mcep.data = np.hstack((c0[:, None], mc))
+    mcep = converter.convert(src.mel_cepstrum, mlpg=not disable_mlpg,
+                             diff=diffvc)
     if diffvc:
         wav = kwiiyatta.apply_mlsa_filter(src, mcep)
     else:
