@@ -5,13 +5,7 @@ import copy
 from pathlib import Path
 
 from nnmnkwii.baseline.gmm import MLPG
-from nnmnkwii.datasets import PaddedFileSourceDataset
-from nnmnkwii.datasets.cmu_arctic import CMUArcticWavFileDataSource
-from nnmnkwii.metrics import melcd
-from nnmnkwii.preprocessing import (delta_features, remove_zeros_frames,
-                                    trim_zeros_frames)
-from nnmnkwii.preprocessing.alignment import DTWAligner
-from nnmnkwii.util import apply_each2d_trim
+from nnmnkwii.preprocessing import delta_features
 
 import numpy as np
 
@@ -19,6 +13,9 @@ from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
+from kwiiyatta.converter import (AlignedDataset, DeltaFeatureDataset,
+                                 MelCepstrumDataset, TrimmedDataset,
+                                 make_dataset_to_array)
 
 
 conf = kwiiyatta.Config()
@@ -53,54 +50,26 @@ else:
     ]
 
 
-class MyFileDataSource(CMUArcticWavFileDataSource):
-    def __init__(self, *args, **kwargs):
-        super(MyFileDataSource, self).__init__(*args, **kwargs)
-        self.test_paths = None
-
-    def collect_files(self):
-        paths = [Path(path) for path in super(
-            MyFileDataSource, self).collect_files()]
-        paths_train, paths_test = train_test_split(
-            paths, test_size=test_size, random_state=1234)
-
-        # keep paths for later testing
-        self.test_paths = paths_test
-
-        return paths_train
-
-    def collect_features(self, path):
-        feature = conf.create_analyzer(path, Analyzer=kwiiyatta.analyze_wav)
-        s = trim_zeros_frames(feature.spectrum_envelope)
-        return feature.mel_cepstrum.data[:len(s)]  # トリムするフレームが手前にずれてるのでは？
+def train_and_test_paths(keys):
+    paths = sorted(keys)[:max_files]
+    return train_test_split(paths, test_size=test_size, random_state=1234)
 
 
-clb_source = MyFileDataSource(data_root=DATA_ROOT,
-                              speakers=["clb"], max_files=max_files)
-slt_source = MyFileDataSource(data_root=DATA_ROOT,
-                              speakers=["slt"], max_files=max_files)
+src_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_clb_arctic'/'wav')
+tgt_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_slt_arctic'/'wav')
 
-X = PaddedFileSourceDataset(clb_source, 1200).asarray()
-Y = PaddedFileSourceDataset(slt_source, 1200).asarray()
-print(X.shape)
-print(Y.shape)
+dataset = \
+    MelCepstrumDataset(
+        AlignedDataset(
+            TrimmedDataset(
+                kwiiyatta.ParallelDataset(src_dataset, tgt_dataset))))
 
-# Alignment
-X_aligned, Y_aligned = DTWAligner(verbose=0, dist=melcd).transform((X, Y))
-
-# Drop 1st (power) dimension
-X_aligned, Y_aligned = X_aligned[:, :, 1:], Y_aligned[:, :, 1:]
-
-static_dim = X_aligned.shape[-1]
 if use_delta:
-    X_aligned = apply_each2d_trim(delta_features, X_aligned, windows)
-    Y_aligned = apply_each2d_trim(delta_features, Y_aligned, windows)
+    dataset = DeltaFeatureDataset(dataset)
 
-XY = (np.concatenate((X_aligned, Y_aligned), axis=-1)
-        .reshape(-1, X_aligned.shape[-1]*2))
-print(XY.shape)
+train_paths, test_paths = train_and_test_paths(dataset.keys())
 
-XY = remove_zeros_frames(XY)
+XY = make_dataset_to_array(dataset, train_paths)
 print(XY.shape)
 
 gmm = GaussianMixture(
@@ -111,7 +80,7 @@ gmm = GaussianMixture(
 gmm.fit(XY)
 
 
-def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
+def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
     # GMM-based parameter generation is provided by the library
     # in `baseline` module
     if disable_mlpg:
@@ -124,12 +93,13 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
 
     mcep = copy.copy(src.mel_cepstrum)
     c0, mc = mcep.data[:, 0], mcep.data[:, 1:]
+    dim = mc.shape[-1]
     if use_delta:
         mc = delta_features(mc, windows)
     mc = paramgen.transform(mc)
-    if disable_mlpg and mc.shape[-1] != static_dim:
-        mc = mc[:, :static_dim]
-    assert mc.shape[-1] == static_dim
+    if disable_mlpg and mc.shape[-1] != dim:
+        mc = mc[:, :dim]
+    assert mc.shape[-1] == dim
     mcep.data = np.hstack((c0[:, None], mc))
     if diffvc:
         wav = kwiiyatta.apply_mlsa_filter(src, mcep)
@@ -141,11 +111,11 @@ def test_one_utt(src_path, tgt_path, disable_mlpg=False, diffvc=True):
     return wav
 
 
-for i, (src_path, tgt_path) in enumerate(zip(clb_source.test_paths,
-                                             slt_source.test_paths)):
+for i, src_path in enumerate(test_paths):
+    src_path = DATA_ROOT/'cmu_us_clb_arctic'/'wav'/src_path
     print("{}-th sample".format(i+1))
-    diff_MLPG = test_one_utt(src_path, tgt_path)
-    synth_MLPG = test_one_utt(src_path, tgt_path, diffvc=False)
+    diff_MLPG = test_one_utt(src_path)
+    synth_MLPG = test_one_utt(src_path, diffvc=False)
 
     result_path = RESULT_ROOT/src_path.name
     result_path.parent.mkdir(parents=True, exist_ok=True)
