@@ -4,18 +4,16 @@
 import copy
 from pathlib import Path
 
-from nnmnkwii.baseline.gmm import MLPG
 from nnmnkwii.preprocessing import delta_features
 
 import numpy as np
 
-from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
 from kwiiyatta.converter import (AlignedDataset, DeltaFeatureDataset,
-                                 MelCepstrumDataset, TrimmedDataset,
-                                 make_dataset_to_array)
+                                 GMMFeatureConverter, MelCepstrumDataset,
+                                 TrimmedDataset)
 
 
 conf = kwiiyatta.Config()
@@ -69,26 +67,12 @@ if use_delta:
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
-XY = make_dataset_to_array(dataset, train_paths)
-print(XY.shape)
+converter = GMMFeatureConverter(random_state=GMM_RANDOM_SEED)
 
-gmm = GaussianMixture(
-    n_components=64, covariance_type="full", max_iter=100, verbose=1,
-    random_state=GMM_RANDOM_SEED
-)
-
-gmm.fit(XY)
+converter.train(dataset, train_paths)
 
 
 def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
-    # GMM-based parameter generation is provided by the library
-    # in `baseline` module
-    if disable_mlpg:
-        # Force disable MLPG
-        paramgen = MLPG(gmm, windows=[(0, 0, np.array([1.0]))], diff=diffvc)
-    else:
-        paramgen = MLPG(gmm, windows=windows, diff=diffvc)
-
     src = conf.create_analyzer(src_path, Analyzer=kwiiyatta.analyze_wav)
 
     mcep = copy.copy(src.mel_cepstrum)
@@ -96,7 +80,7 @@ def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
     dim = mc.shape[-1]
     if use_delta:
         mc = delta_features(mc, windows)
-    mc = paramgen.transform(mc)
+    mc = converter.convert(mc, mlpg=not disable_mlpg, diff=diffvc)
     if disable_mlpg and mc.shape[-1] != dim:
         mc = mc[:, :dim]
     assert mc.shape[-1] == dim
