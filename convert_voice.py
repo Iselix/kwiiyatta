@@ -4,14 +4,12 @@
 import copy
 from pathlib import Path
 
-from nnmnkwii.preprocessing import delta_features
-
 import numpy as np
 
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
-from kwiiyatta.converter import (AlignedDataset, DeltaFeatureDataset,
+from kwiiyatta.converter import (AlignedDataset, DeltaFeatureConverter,
                                  GMMFeatureConverter, MelCepstrumDataset,
                                  TrimmedDataset)
 
@@ -36,17 +34,6 @@ max_files = 100  # number of utterances to be used.
 test_size = 0.03
 use_delta = True
 
-if use_delta:
-    windows = [
-        (0, 0, np.array([1.0])),
-        (1, 1, np.array([-0.5, 0.0, 0.5])),
-        (1, 1, np.array([1.0, -2.0, 1.0])),
-    ]
-else:
-    windows = [
-        (0, 0, np.array([1.0])),
-    ]
-
 
 def train_and_test_paths(keys):
     paths = sorted(keys)[:max_files]
@@ -62,12 +49,11 @@ dataset = \
             TrimmedDataset(
                 kwiiyatta.ParallelDataset(src_dataset, tgt_dataset))))
 
-if use_delta:
-    dataset = DeltaFeatureDataset(dataset)
-
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
 converter = GMMFeatureConverter(random_state=GMM_RANDOM_SEED)
+if use_delta:
+    converter = DeltaFeatureConverter(converter)
 
 converter.train(dataset, train_paths)
 
@@ -78,9 +64,7 @@ def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
     mcep = copy.copy(src.mel_cepstrum)
     c0, mc = mcep.data[:, 0], mcep.data[:, 1:]
     dim = mc.shape[-1]
-    if use_delta:
-        mc = delta_features(mc, windows)
-    mc = converter.convert(mc, mlpg=not disable_mlpg, diff=diffvc)
+    mc = converter.convert(mc, raw=mcep, mlpg=not disable_mlpg, diff=diffvc)
     if disable_mlpg and mc.shape[-1] != dim:
         mc = mc[:, :dim]
     assert mc.shape[-1] == dim

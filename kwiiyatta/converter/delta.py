@@ -28,3 +28,23 @@ class DeltaFeatureDataset(abc.MapDataset):
                              f' but others are {self.frame_period!r}')
 
         return delta_features(feature, DELTA_WINDOWS)
+
+
+class DeltaFeatureConverter(abc.MapFeatureConverter):
+    def train(self, dataset, keys, **kwargs):
+        delta_dataset = DeltaFeatureDataset(dataset)
+        self.base.train(delta_dataset, keys, **kwargs)
+        self.frame_period = delta_dataset.frame_period
+
+    def convert(self, feature, raw, **kwargs):
+        if self.frame_period != raw.frame_period:
+            raise ValueError(f'frame_period is expected to'
+                             f' {self.frame_period!s}'
+                             f' but {raw.frame_period!s}')
+
+        dim = feature.shape[-1]
+        result = super().convert(delta_features(feature, DELTA_WINDOWS),
+                                 **kwargs)
+        if result.shape[-1] > dim:
+            result = result[:, :dim]
+        return result
