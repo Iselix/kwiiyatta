@@ -13,16 +13,13 @@ conf.add_argument('--data-root', type=str,
                   help='Root of data-set path for voice conversion')
 conf.add_argument('--result-dir', type=str,
                   help='Path to write result wav files')
-conf.add_argument('--gmm-seed', type=int,
-                  help='Random seed for GaussianMixtureModel')
+conf.add_converter_arguments()
 conf.parse_args()
 
 DATA_ROOT = (Path(conf.data_root) if conf.data_root is not None
              else Path.home()/'data'/'cmu_arctic')
 RESULT_ROOT = (Path(conf.result_dir) if conf.result_dir is not None
                else Path(__file__).parent/'result')
-
-GMM_RANDOM_SEED = conf.gmm_seed
 
 max_files = 100  # number of utterances to be used.
 test_size = 0.03
@@ -41,8 +38,7 @@ dataset = kwiiyatta.align(src_dataset, tgt_dataset)
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
-converter = kwiiyatta.MelCepstrumConverter(
-    use_delta=use_delta, random_state=GMM_RANDOM_SEED)
+converter = conf.create_converter(use_delta=use_delta)
 
 converter.train(dataset, train_paths)
 

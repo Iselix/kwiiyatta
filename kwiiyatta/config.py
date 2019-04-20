@@ -14,6 +14,10 @@ class Config:
                                help='Mel-cepstrum order for spectrum envelope')
         self.parser = argparser
 
+    def add_converter_arguments(self):
+        self.parser.add_argument('--converter-seed', type=int,
+                                 help='Random seed for feature converter')
+
     def add_argument(self, *args, **kwargs):
         self.parser.add_argument(*args, **kwargs)
 
@@ -30,3 +34,11 @@ class Config:
         kwargs['frame_period'] = self.frame_period
         kwargs['mcep_order'] = self.mcep_order
         return Analyzer(*args, **kwargs)
+
+    def create_converter(self, Converter=None, **kwargs):
+        if Converter is None:
+            Converter = kwiiyatta.MelCepstrumConverter
+
+        if 'random_state' not in kwargs:
+            kwargs['random_state'] = self.converter_seed
+        return Converter(**kwargs)
