@@ -31,7 +31,8 @@ def test_voice_conversion(tmpdir, check):
     subprocess.run(
         [
             'python', 'convert_voice.py',
-            '--data-root', str(dataset.DATASET_ROOT),
+            '--source', str(dataset.CLB_DIR),
+            '--target', str(dataset.SLT_DIR),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
         ], check=True)
@@ -64,8 +65,10 @@ def test_voice_conversion_fullset(tmpdir):
     subprocess.run(
         [
             'python', 'convert_voice.py',
-            '--data-root', str(dataset.get_dataset_path(dataset.DATASET_ROOT,
-                                                        fullset=True)),
+            '--source',
+            str(dataset.get_dataset_path(dataset.CLB_DIR, fullset=True)),
+            '--target',
+            str(dataset.get_dataset_path(dataset.SLT_DIR, fullset=True)),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
         ], check=True)

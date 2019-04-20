@@ -1,4 +1,6 @@
 import argparse
+import functools
+import pathlib
 import sys
 
 import kwiiyatta
@@ -15,8 +17,15 @@ class Config:
         self.parser = argparser
 
     def add_converter_arguments(self):
-        self.parser.add_argument('--converter-seed', type=int,
-                                 help='Random seed for feature converter')
+        self.parser.add_argument(
+            '--source', type=str,
+            help='Source data-set path of voice conversion')
+        self.parser.add_argument(
+            '--target', type=str,
+            help='Target data-set path of voice conversion')
+        self.parser.add_argument(
+            '--converter-seed', type=int,
+            help='Random seed for feature converter')
 
     def add_argument(self, *args, **kwargs):
         self.parser.add_argument(*args, **kwargs)
@@ -42,3 +51,23 @@ class Config:
         if 'random_state' not in kwargs:
             kwargs['random_state'] = self.converter_seed
         return Converter(**kwargs)
+
+    @property
+    def source_path(self):
+        return pathlib.Path(self.source)
+
+    @property
+    def target_path(self):
+        return pathlib.Path(self.target)
+
+    def load_dataset(self):
+        analyzer = functools.partial(
+            self.create_analyzer,
+            Analyzer=kwiiyatta.analyze_wav
+        )
+        src_dataset = \
+            kwiiyatta.WavFileDataset(self.source_path, Analyzer=analyzer)
+        tgt_dataset = \
+            kwiiyatta.WavFileDataset(self.target_path, Analyzer=analyzer)
+
+        return kwiiyatta.align(src_dataset, tgt_dataset)

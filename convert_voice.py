@@ -9,15 +9,11 @@ import kwiiyatta
 
 
 conf = kwiiyatta.Config()
-conf.add_argument('--data-root', type=str,
-                  help='Root of data-set path for voice conversion')
 conf.add_argument('--result-dir', type=str,
                   help='Path to write result wav files')
 conf.add_converter_arguments()
 conf.parse_args()
 
-DATA_ROOT = (Path(conf.data_root) if conf.data_root is not None
-             else Path.home()/'data'/'cmu_arctic')
 RESULT_ROOT = (Path(conf.result_dir) if conf.result_dir is not None
                else Path(__file__).parent/'result')
 
@@ -31,10 +27,7 @@ def train_and_test_paths(keys):
     return train_test_split(paths, test_size=test_size, random_state=1234)
 
 
-src_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_clb_arctic'/'wav')
-tgt_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_slt_arctic'/'wav')
-
-dataset = kwiiyatta.align(src_dataset, tgt_dataset)
+dataset = conf.load_dataset()
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 
@@ -59,7 +52,7 @@ def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
 
 
 for i, src_path in enumerate(test_paths):
-    src_path = DATA_ROOT/'cmu_us_clb_arctic'/'wav'/src_path
+    src_path = conf.source_path/src_path
     print("{}-th sample".format(i+1))
     diff_MLPG = test_one_utt(src_path)
     synth_MLPG = test_one_utt(src_path, diffvc=False)
