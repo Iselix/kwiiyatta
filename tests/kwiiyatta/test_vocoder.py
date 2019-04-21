@@ -1,5 +1,4 @@
 import copy
-import functools
 
 import pytest
 
@@ -11,17 +10,6 @@ from tests.plugin import assert_any
 
 FRAME_PERIODS = [3, 5, 8]
 MCEP_ORDERS = [24, 36, 48]
-
-
-@functools.lru_cache(maxsize=None)
-def _cached_analyzer(wavfile, frame_period):
-    return kwiiyatta.analyze_wav(wavfile, frame_period=frame_period)
-
-
-def get_analyzer(wavfile, frame_period=5, mcep_order=24):
-    a = _cached_analyzer(wavfile, frame_period)
-    a.mel_cepstrum_order = mcep_order
-    return a
 
 
 def test_set_Analyzer_param():
@@ -109,8 +97,8 @@ def test_analyzer_feature():
 
 
 def test_analyze_difffile(check):
-    a1 = get_analyzer(dataset.CLB_WAV)
-    a2 = get_analyzer(dataset.CLB_WAV2)
+    a1 = feature.get_analyzer(dataset.CLB_WAV)
+    a2 = feature.get_analyzer(dataset.CLB_WAV2)
 
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(a1, a2, strict=False)
@@ -124,7 +112,7 @@ def test_analyze_difffile(check):
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
 @pytest.mark.parametrize('frame_period', FRAME_PERIODS)
 def test_reanalyze(wavfile, frame_period):
-    a1 = get_analyzer(wavfile, frame_period=frame_period)
+    a1 = feature.get_analyzer(wavfile, frame_period=frame_period)
 
     analyzer_wav = a1.synthesize()
     feature_wav = kwiiyatta.feature(a1).synthesize()
@@ -143,7 +131,7 @@ def test_reanalyze(wavfile, frame_period):
 
 
 def test_feature():
-    a = get_analyzer(dataset.CLB_WAV)
+    a = feature.get_analyzer(dataset.CLB_WAV)
     f = kwiiyatta.feature(a)
 
     assert f == a
@@ -181,7 +169,7 @@ def test_feature():
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
 @pytest.mark.parametrize('mcep_order', MCEP_ORDERS)
 def test_mcep_to_spec(wavfile, mcep_order):
-    a1 = get_analyzer(wavfile, mcep_order=mcep_order)
+    a1 = feature.get_analyzer(wavfile, mcep_order=mcep_order)
     mcep = a1.mel_cepstrum
 
     assert mcep.data.shape[-1] == mcep_order+1
