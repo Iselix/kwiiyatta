@@ -24,6 +24,9 @@ class Config:
             '--target', type=str,
             help='Target data-set path of voice conversion')
         self.parser.add_argument(
+            '--converter-components', type=int, default=64,
+            help='Components num for feature converter')
+        self.parser.add_argument(
             '--converter-seed', type=int,
             help='Random seed for feature converter')
 
@@ -50,14 +53,20 @@ class Config:
 
         if 'random_state' not in kwargs:
             kwargs['random_state'] = self.converter_seed
+        if 'components' not in kwargs:
+            kwargs['components'] = self.converter_components
         return Converter(**kwargs)
 
     @property
     def source_path(self):
+        if self.source is None:
+            self.parser.error('the following arguments are required: --source')
         return pathlib.Path(self.source)
 
     @property
     def target_path(self):
+        if self.source is None:
+            self.parser.error('the following arguments are required: --target')
         return pathlib.Path(self.target)
 
     def load_dataset(self):

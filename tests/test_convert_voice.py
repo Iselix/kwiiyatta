@@ -35,6 +35,7 @@ def test_voice_conversion(tmpdir, check):
             '--target', str(dataset.SLT_DIR),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
+            '--converter-components', '1',
         ], check=True)
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
@@ -45,18 +46,18 @@ def test_voice_conversion(tmpdir, check):
     act_diff = kwiiyatta.analyze_wav(result_root/'arctic_a0009.diff.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_diff)
-    check.round_equal(0.12, f0_diff)
-    check.round_equal(0.69, spec_diff)
-    check.round_equal(0.072, ape_diff)
-    check.round_equal(0.26, mcep_diff)
+    check.round_equal(0.094, f0_diff)
+    check.round_equal(0.44, spec_diff)
+    check.round_equal(0.047, ape_diff)
+    check.round_equal(0.20, mcep_diff)
 
     act_synth = kwiiyatta.analyze_wav(result_root/'arctic_a0009.synth.wav')
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, act_synth)
-    check.round_equal(0.11, f0_diff)
-    check.round_equal(0.77, spec_diff)
-    check.round_equal(0.080, ape_diff)
-    check.round_equal(0.25, mcep_diff)
+    check.round_equal(0.10, f0_diff)
+    check.round_equal(0.49, spec_diff)
+    check.round_equal(0.090, ape_diff)
+    check.round_equal(0.20, mcep_diff)
 
 
 @pytest.mark.assert_any
