@@ -3,8 +3,6 @@
 
 from pathlib import Path
 
-from sklearn.model_selection import train_test_split
-
 import kwiiyatta
 
 
@@ -23,19 +21,7 @@ max_files = 100  # number of utterances to be used.
 test_size = 0.03
 use_delta = True
 
-
-def train_and_test_paths(keys):
-    paths = sorted(keys)[:max_files]
-    return train_test_split(paths, test_size=test_size, random_state=1234)
-
-
-dataset = conf.load_dataset()
-
-train_paths, _ = train_and_test_paths(dataset.keys())
-
-converter = conf.create_converter(use_delta=use_delta)
-
-converter.train(dataset, train_paths)
+converter = conf.train_converter(use_delta=use_delta)
 
 
 def test_one_utt(src_path, disable_mlpg=False, diffvc=True):

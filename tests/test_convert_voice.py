@@ -36,6 +36,7 @@ def test_voice_conversion(tmpdir, check):
             '--result-dir', str(result_root),
             '--converter-seed', '0',
             '--converter-components', '1',
+            '--max-files', '8',
             str(dataset.CLB_DIR/'arctic_a0009.wav'),
         ], check=True)
 
@@ -73,15 +74,17 @@ def test_voice_conversion_fullset(tmpdir):
             str(dataset.get_dataset_path(dataset.SLT_DIR, fullset=True)),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
-            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0036.wav',
+            '--max-files', '100',
+            '--skip-files', '3',
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0001.wav',
                                      fullset=True)),
-            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0041.wav',
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0002.wav',
                                      fullset=True)),
-            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0082.wav',
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0003.wav',
                                      fullset=True)),
         ], check=True)
 
-    results = ['arctic_a0036', 'arctic_a0041', 'arctic_a0082']
+    results = ['arctic_a0001', 'arctic_a0002', 'arctic_a0003']
 
     for result in results:
         result_path = (result_root/result).with_suffix('.diff.wav')
@@ -92,10 +95,10 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.028, f0_diff, 0.054)
-        assert_any.between(0.35, spec_diff, 0.42)
-        assert_any.between(0.026, ape_diff, 0.044)
-        assert_any.between(0.17, mcep_diff, 0.18)
+        assert_any.between(0.057, f0_diff, 0.089)
+        assert_any.between(0.44, spec_diff, 0.47)
+        assert_any.between(0.043, ape_diff, 0.054)
+        assert_any.between(0.17, mcep_diff, 0.20)
 
     for result in results:
         result_path = (result_root/result).with_suffix('.synth.wav')
@@ -106,7 +109,7 @@ def test_voice_conversion_fullset(tmpdir):
         actual = kwiiyatta.analyze_wav(result_path)
         f0_diff, spec_diff, ape_diff, mcep_diff = \
             feature.calc_feature_diffs(expected, actual)
-        assert_any.between(0.048, f0_diff, 0.11)
-        assert_any.between(0.36, spec_diff, 0.47)
-        assert_any.between(0.068, ape_diff, 0.11)
-        assert_any.between(0.17, mcep_diff, 0.19)
+        assert_any.between(0.062, f0_diff, 0.080)
+        assert_any.between(0.45, spec_diff, 0.50)
+        assert_any.between(0.10, ape_diff, 0.13)
+        assert_any.between(0.17, mcep_diff, 0.20)

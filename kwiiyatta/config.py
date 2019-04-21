@@ -24,6 +24,12 @@ class Config:
             '--target', type=str,
             help='Target data-set path of voice conversion')
         self.parser.add_argument(
+            '--max-files', type=int,
+            help='File num to train feature converter')
+        self.parser.add_argument(
+            '--skip-files', type=int,
+            help='Skip file num to train feature converter')
+        self.parser.add_argument(
             '--converter-components', type=int, default=64,
             help='Components num for feature converter')
         self.parser.add_argument(
@@ -80,3 +86,14 @@ class Config:
             kwiiyatta.WavFileDataset(self.target_path, Analyzer=analyzer)
 
         return kwiiyatta.align(src_dataset, tgt_dataset)
+
+    def train_converter(self, **kwargs):
+        converter = self.create_converter(**kwargs)
+        dataset = self.load_dataset()
+        keys = sorted(dataset.keys())
+        if self.skip_files is not None:
+            keys = keys[self.skip_files:]
+        if self.max_files is not None:
+            keys = keys[:self.max_files]
+        converter.train(dataset, keys)
+        return converter
