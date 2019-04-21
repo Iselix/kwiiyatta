@@ -29,6 +29,15 @@ def calc_feature_diffs(exp, act, **kwargs):
             calc_diff(exp.mel_cepstrum.data, act.mel_cepstrum.data, **kwargs))
 
 
+def override_spectrum_power(dest, tgt):
+    dest.spectrum_envelope[:] *= \
+        np.repeat(np.exp(np.mean(np.log(tgt.spectrum_envelope), axis=1)
+                         - np.mean(np.log(dest.spectrum_envelope), axis=1))
+                  .reshape(-1, 1),
+                  dest.spectrum_len,
+                  axis=1)
+
+
 @functools.lru_cache(maxsize=None)
 def _cached_analyzer(wavfile, frame_period):
     return kwiiyatta.analyze_wav(wavfile, frame_period=frame_period)
