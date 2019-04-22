@@ -1,3 +1,4 @@
+import copy
 import pathlib
 
 import kwiiyatta
@@ -17,6 +18,8 @@ def main():
                       help='Not to write result wav file, and play wavform')
     conf.add_argument('--carrier', type=str,
                       help='Wav file to use for carrier')
+    conf.add_argument('--diffvc', action='store_true',
+                      help='Use difference MelCepstrum synthesis')
     conf.parse_args()
     conf.play |= conf.no_save
 
@@ -30,17 +33,24 @@ def main():
 
     feature = kwiiyatta.feature(source)
 
+    wav = None
+
     if conf.carrier is not None:
         carrier = conf.create_analyzer(conf.carrier,
                                        Analyzer=kwiiyatta.analyze_wav)
         feature = kwiiyatta.align(source, carrier)
-        feature.f0 = carrier.f0
+        if conf.diffvc:
+            mcep_diff = copy.copy(feature.mel_cepstrum)
+            mcep_diff.data -= carrier.mel_cepstrum.data
+            wav = kwiiyatta.apply_mlsa_filter(carrier.wavdata, mcep_diff)
+        else:
+            feature.f0 = carrier.f0
 
-    if conf.mcep:
-        feature.extract_mel_cepstrum()
-        feature.spectrum_envelope = None
-
-    wav = feature.synthesize()
+    if wav is None:
+        if conf.mcep:
+            feature.extract_mel_cepstrum()
+            feature.spectrum_envelope = None
+        wav = feature.synthesize()
 
     if not conf.no_save:
         result_path.parent.mkdir(parents=True, exist_ok=True)

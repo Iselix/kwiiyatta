@@ -89,3 +89,36 @@ def test_voice_resynthesis_carrier(check, tmpdir):
     check.round_equal(0.22, spec_diff)
     check.round_equal(0.10, ape_diff)
     check.round_equal(0.10, mcep_diff)
+
+
+def test_voice_resynthesis_diffvc(check, tmpdir):
+    result_root = pathlib.Path(tmpdir)
+    sys.argv = [
+        sys.argv[0],
+        str(dataset.CLB_WAV),
+        "--result-dir", str(result_root),
+        "--mcep",
+        "--mcep-order", "48",
+        "--carrier", str(dataset.SLT_WAV),
+        "--diffvc"
+    ]
+    rv.main()
+
+    result_file = result_root/'arctic_a0001.wav'
+    assert result_file.is_file()
+
+    clb = feature.get_analyzer(dataset.CLB_WAV)
+    slt = feature.get_analyzer(dataset.SLT_WAV)
+    expected = kwiiyatta.align(clb, slt)
+    expected.f0 = slt.f0
+    feature.override_spectrum_power(expected, slt)
+    expected.aperiodicity = slt.aperiodicity
+    expected.mel_cepstrum = None
+
+    actual = kwiiyatta.analyze_wav(result_file)
+    f0_diff, spec_diff, ape_diff, mcep_diff = \
+        feature.calc_feature_diffs(expected, actual)
+    check.round_equal(0.096, f0_diff)
+    check.round_equal(0.30, spec_diff)
+    check.round_equal(0.071, ape_diff)
+    check.round_equal(0.12, mcep_diff)
