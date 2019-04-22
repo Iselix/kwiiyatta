@@ -1,5 +1,7 @@
 import copy
 
+from nnmnkwii.preprocessing.alignment import DTWAligner
+
 import pytest
 
 import kwiiyatta
@@ -191,3 +193,21 @@ def test_mcep_to_spec(wavfile, mcep_order):
         a1.spectrum_envelope,
         mcep.extract_spectrum(a1.spectrum_len))
     assert_any.between(0.021, spec_diff, 0.091)
+
+
+def test_align_even():
+    a1 = feature.get_analyzer(dataset.CLB_WAV)
+    a2 = feature.get_analyzer(dataset.SLT_WAV)
+
+    mcep1 = a1.mel_cepstrum.data
+    mcep2 = a2.mel_cepstrum.data
+    mcep1 = mcep1.reshape(1, *mcep1.shape)
+    mcep2 = mcep2.reshape(1, *mcep2.shape)
+    mcep1, mcep2 = DTWAligner(verbose=0).transform((mcep1, mcep2))
+    exp_m1 = mcep1[0, :, :]
+    exp_m2 = mcep2[0, :, :]
+
+    act1, act2 = kwiiyatta.align_even(a1, a2)
+
+    assert (exp_m1 == act1.mel_cepstrum.data).all()
+    assert (exp_m2 == act2.mel_cepstrum.data).all()
