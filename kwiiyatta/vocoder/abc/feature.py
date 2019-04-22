@@ -108,6 +108,27 @@ class Feature(abc.ABC):
             return False
         return True
 
+    def __getitem__(self, key):
+        f0 = self.f0[key]
+        spec = self.spectrum_envelope[key]
+        ape = self.aperiodicity[key]
+        mcep = None
+        if self._mel_cepstrum.data is not None:
+            mcep = self.mel_cepstrum.data[key]
+
+        if isinstance(key, int):
+            if mcep is None:
+                mcep = self.mel_cepstrum.data[key]
+            return f0, spec, ape, mcep
+
+        result = kwiiyatta.feature(self)
+        result._f0 = f0
+        result._spectrum_envelope = spec
+        result._aperiodicity = ape
+        if mcep is not None:
+            result._mel_cepstrum.data = mcep
+        return result
+
 
 class MutableFeature(Feature):
     def __init__(self, *args, **kwargs):

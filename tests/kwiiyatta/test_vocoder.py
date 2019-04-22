@@ -164,6 +164,20 @@ def test_feature():
     f.aperiodicity[-1][-1] = a.aperiodicity[-1][-1]
     assert f == a
 
+    half = len(a.f0)//2
+    f0, spec, ape, mcep = a[half]
+    assert f0 == a.f0[half]
+    assert (spec == a.spectrum_envelope[half]).all()
+    assert (ape == a.aperiodicity[half]).all()
+    assert (mcep == a.mel_cepstrum.data[half]).all()
+
+    f = a[:half]
+    assert len(f.f0) == len(f.spectrum_envelope) == len(f.aperiodicity) == half
+    assert (f.f0 == a.f0[:half]).all()
+    assert (f.spectrum_envelope == a.spectrum_envelope[:half]).all()
+    assert (f.aperiodicity == a.aperiodicity[:half]).all()
+    assert (f.mel_cepstrum.data == a.mel_cepstrum.data[:half]).all()
+
 
 @pytest.mark.assert_any
 @pytest.mark.parametrize('wavfile', [dataset.CLB_WAV])
