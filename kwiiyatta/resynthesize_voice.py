@@ -15,6 +15,8 @@ def main():
                       help='Play result wavform')
     conf.add_argument('--no-save', action='store_true',
                       help='Not to write result wav file, and play wavform')
+    conf.add_argument('--carrier', type=str,
+                      help='Wav file to use for carrier')
     conf.parse_args()
     conf.play |= conf.no_save
 
@@ -27,6 +29,12 @@ def main():
         result_path = pathlib.Path(conf.result_dir)/source_path.name
 
     feature = kwiiyatta.feature(source)
+
+    if conf.carrier is not None:
+        carrier = conf.create_analyzer(conf.carrier,
+                                       Analyzer=kwiiyatta.analyze_wav)
+        feature = kwiiyatta.align(source, carrier)
+        feature.f0 = carrier.f0
 
     if conf.mcep:
         feature.extract_mel_cepstrum()
