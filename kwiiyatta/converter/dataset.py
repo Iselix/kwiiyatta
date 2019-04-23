@@ -46,3 +46,9 @@ class ParallelDataset(abc.Dataset):
 def TrimmedDataset(feature):
     s = trim_zeros_frames(feature.spectrum_envelope)
     return feature[:len(s)]  # トリムするフレームが手前にずれてるのでは？
+
+
+@abc.map_dataset(expand_tuple=False)
+def AlignedDataset(features):
+    a, b = features
+    return kwiiyatta.align_even(a, b)

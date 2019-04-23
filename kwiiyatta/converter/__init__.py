@@ -1,5 +1,7 @@
-from .dataset import ParallelDataset, TrimmedDataset, WavFileDataset
+from .dataset import (AlignedDataset, ParallelDataset, TrimmedDataset,
+                      WavFileDataset)
 
 
 __all__ = []
-__all__ += ['ParallelDataset', 'TrimmedDataset', 'WavFileDataset']
+__all__ += ['AlignedDataset', 'ParallelDataset', 'TrimmedDataset',
+            'WavFileDataset']
