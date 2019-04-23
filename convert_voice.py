@@ -6,7 +6,6 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 
 import kwiiyatta
-from kwiiyatta.converter import AlignedDataset, TrimmedDataset
 
 
 conf = kwiiyatta.Config()
@@ -38,10 +37,8 @@ def train_and_test_paths(keys):
 src_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_clb_arctic'/'wav')
 tgt_dataset = kwiiyatta.WavFileDataset(DATA_ROOT/'cmu_us_slt_arctic'/'wav')
 
-dataset = \
-    AlignedDataset(
-        TrimmedDataset(
-            kwiiyatta.ParallelDataset(src_dataset, tgt_dataset)))
+dataset = kwiiyatta.align_dataset(
+    kwiiyatta.ParallelDataset(src_dataset, tgt_dataset))
 
 train_paths, test_paths = train_and_test_paths(dataset.keys())
 

@@ -14,7 +14,11 @@ def MelCepstrumConverter(use_delta=True, Converter=GMMFeatureConverter,
     return MelCepstrumFeatureConverter(converter)
 
 
-__all__ = ['MelCepstrumConverter']
+def align_dataset(parallel_dataset):
+    return AlignedDataset(TrimmedDataset(parallel_dataset))
+
+
+__all__ = ['MelCepstrumConverter', 'align_dataset']
 __all__ += ['AlignedDataset', 'ParallelDataset', 'TrimmedDataset',
             'WavFileDataset',
             'make_dataset_to_array']
