@@ -34,7 +34,7 @@ def test_voice_resynthesis(tmpdir, check):
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, actual)
     check.round_equal(0.079, f0_diff)
-    check.round_equal(0.20, spec_diff)
+    check.round_equal(0.19, spec_diff)
     check.round_equal(0.073, ape_diff)
     check.round_equal(0.099, mcep_diff)
 
@@ -119,6 +119,6 @@ def test_voice_resynthesis_diffvc(check, tmpdir):
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, actual)
     check.round_equal(0.096, f0_diff)
-    check.round_equal(0.30, spec_diff)
+    check.round_equal(0.35, spec_diff)
     check.round_equal(0.071, ape_diff)
-    check.round_equal(0.12, mcep_diff)
+    check.round_equal(0.13, mcep_diff)

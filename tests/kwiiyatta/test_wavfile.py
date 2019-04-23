@@ -1,5 +1,7 @@
 import pathlib
 
+import numpy as np
+
 import pytest
 
 import kwiiyatta
@@ -24,8 +26,33 @@ def test_load_and_save_wav(tmpdir, wavfile):
     assert_any.between(-21297, data_min, -21297, sig_dig=5)
 
     savepath = pathlib.Path(tmpdir)/'save.wav'
-    wav.save(savepath)
+    wav.save(savepath, normalize=False)
 
     saved_wav = kwiiyatta.load_wav(savepath)
     assert saved_wav.fs == wav.fs
     assert (saved_wav.data == wav.data).all()
+
+
+@pytest.mark.assert_any
+@pytest.mark.parametrize('wavfile',
+                         [dataset.CLB_WAV, dataset.CLB_WAV2])
+def test_load_and_save_wav_normalized(tmpdir, wavfile):
+    wav = kwiiyatta.load_wav(wavfile)
+
+    savepath = pathlib.Path(tmpdir)/'save.wav'
+    wav.save(savepath, peak_lv=-1.5)
+
+    expected_peak = np.power(10, -1.5/10) * 2**15
+
+    saved_wav = kwiiyatta.load_wav(savepath)
+    assert saved_wav.fs == wav.fs
+    assert saved_wav.data.mean() < 1
+    assert np.abs(saved_wav.data).max() <= expected_peak
+
+    data_dc = wav.data.mean()
+    data_max = np.abs(wav.data - data_dc).max()
+    expected_data = wav.data - data_dc
+    if np.abs(expected_data).max() > expected_peak:
+        expected_data *= expected_peak / data_max
+
+    assert np.abs(saved_wav.data - expected_data).max() < 1

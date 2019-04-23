@@ -10,10 +10,23 @@ class Wavdata:
         self.fs = fs
         self.data = data
 
-    def save(self, wav):
+    def normalize(self, peak_lv=-1):
+        dc = self.data.mean()
+        self.data -= dc
+        if peak_lv is not None:
+            max_peak = np.power(10, peak_lv/10) * 2**15
+            peak = np.abs(self.data).max()
+            if peak > max_peak:
+                self.data *= max_peak/peak
+
+    def save(self, wav, normalize=True, **kwargs):
+        if normalize:
+            self.normalize(**kwargs)
         wavfile.write(wav, self.fs, self.data.astype(np.int16))
 
-    def play(self):
+    def play(self, normalize=True, **kwargs):
+        if normalize:
+            self.normalize(**kwargs)
         audio = pyaudio.PyAudio()
         stream = audio.open(rate=self.fs, channels=1, format=pyaudio.paInt16,
                             output=True)
