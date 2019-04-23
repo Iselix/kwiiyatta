@@ -1,3 +1,5 @@
+from nnmnkwii.preprocessing import trim_zeros_frames
+
 import kwiiyatta
 
 from . import abc
@@ -38,3 +40,9 @@ class ParallelDataset(abc.Dataset):
 
     def get_data(self, key):
         return self.dataset1[key], self.dataset2[key]
+
+
+@abc.map_dataset()
+def TrimmedDataset(feature):
+    s = trim_zeros_frames(feature.spectrum_envelope)
+    return feature[:len(s)]  # トリムするフレームが手前にずれてるのでは？

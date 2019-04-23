@@ -1,11 +1,14 @@
 import itertools
 import pathlib
 
+import numpy as np
+
 import pytest
 
 import kwiiyatta
+from kwiiyatta.converter import TrimmedDataset
 
-from tests import dataset
+from tests import dataset, feature
 
 
 def test_dataset():
@@ -53,3 +56,27 @@ def test_parallel_dataset(fullset_clb, fullset_slt, fullset_expected):
     p_clb_data, p_slt_data = parallel_dataset['arctic_a0001.wav']
     assert clb_data == p_clb_data
     assert slt_data == p_slt_data
+
+
+@pytest.mark.xfail(strict=True,
+                   reason='Trim position of TrimmedDataset is shifted')
+def test_trimmed_dataset():
+    def add_margin(data, margin_len=64):
+        if len(data.shape) == 1:
+            pad = np.zeros((margin_len,))
+        else:
+            pad = np.zeros((margin_len, data.shape[1]))
+        return np.concatenate((pad, data, pad), axis=0)
+
+    f = kwiiyatta.feature(feature.get_analyzer(dataset.CLB_WAV))
+    f.f0 = add_margin(f.f0)
+    f.spectrum_envelope = add_margin(f.spectrum_envelope)
+    f.aperiodicity = add_margin(f.aperiodicity)
+    len_f = len(f.f0)
+
+    d = TrimmedDataset({'f': f})
+    len_d = len(d['f'].f0)
+
+    assert len_d == len_f-64
+    assert np.abs(d['f'].spectrum_envelope[0]).sum() > 0
+    assert np.abs(d['f'].spectrum_envelope[-1]).sum() > 0
