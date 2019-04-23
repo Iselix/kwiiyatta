@@ -11,6 +11,8 @@ import kwiiyatta
 conf = kwiiyatta.Config()
 conf.add_argument('--result-dir', type=str,
                   help='Path to write result wav files')
+conf.add_argument('files', type=str, nargs='+',
+                  help='Wav files to convert voice')
 conf.add_converter_arguments()
 conf.parse_args()
 
@@ -29,7 +31,7 @@ def train_and_test_paths(keys):
 
 dataset = conf.load_dataset()
 
-train_paths, test_paths = train_and_test_paths(dataset.keys())
+train_paths, _ = train_and_test_paths(dataset.keys())
 
 converter = conf.create_converter(use_delta=use_delta)
 
@@ -51,14 +53,16 @@ def test_one_utt(src_path, disable_mlpg=False, diffvc=True):
     return wav
 
 
-for i, src_path in enumerate(test_paths):
-    src_path = conf.source_path/src_path
+for i, conv_file in enumerate(conf.files):
+    conv_path = Path(conv_file)
     print("{}-th sample".format(i+1))
-    diff_MLPG = test_one_utt(src_path)
-    synth_MLPG = test_one_utt(src_path, diffvc=False)
+    diff_MLPG = test_one_utt(conv_path)
+    synth_MLPG = test_one_utt(conv_path, diffvc=False)
 
-    result_path = RESULT_ROOT/src_path.name
-    result_path.parent.mkdir(parents=True, exist_ok=True)
+    result_path = conv_path
+    if conf.result_dir is not None:
+        result_path = Path(conf.result_dir)/conv_path.name
+        result_path.parent.mkdir(parents=True, exist_ok=True)
 
     print("diff MLPG")
     diff_MLPG.save(result_path.with_suffix('.diff.wav'))

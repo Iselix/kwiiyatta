@@ -36,6 +36,7 @@ def test_voice_conversion(tmpdir, check):
             '--result-dir', str(result_root),
             '--converter-seed', '0',
             '--converter-components', '1',
+            str(dataset.CLB_DIR/'arctic_a0009.wav'),
         ], check=True)
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
@@ -72,6 +73,12 @@ def test_voice_conversion_fullset(tmpdir):
             str(dataset.get_dataset_path(dataset.SLT_DIR, fullset=True)),
             '--result-dir', str(result_root),
             '--converter-seed', '0',
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0036.wav',
+                                     fullset=True)),
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0041.wav',
+                                     fullset=True)),
+            str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0082.wav',
+                                     fullset=True)),
         ], check=True)
 
     results = ['arctic_a0036', 'arctic_a0041', 'arctic_a0082']
