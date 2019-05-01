@@ -15,6 +15,7 @@ setuptools.setup(
         'pyaudio',
         'pyworld',
         'pysptk',
+        'pyside2',
     ],
     entry_points={
         'console_scripts': [
