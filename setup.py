@@ -6,6 +6,7 @@ setuptools.setup(
     author="Iselix",
     description="Voice conversion tool",
     packages=setuptools.find_packages(),
+    package_data={'kwiiyatta.view': ['res/*.ico']},
     install_requires=[
         'nnmnkwii',
         'numpy',

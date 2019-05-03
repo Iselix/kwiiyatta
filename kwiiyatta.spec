@@ -37,7 +37,8 @@ kwiiyatta_exe = EXE(kwiiyatta_pyz,
                     strip=False,
                     upx=True,
                     runtime_tmpdir=None,
-                    console=True )
+                    console=True,
+                    icon='kwiiyatta/view/res/yatta_akane.ico' )
 
 
 kwiieiya_a = Analysis(['kwiiyatta\\resynthesize_voice.py'],
@@ -66,7 +67,8 @@ kwiieiya_exe = EXE(kwiieiya_pyz,
                    strip=False,
                    upx=True,
                    runtime_tmpdir=None,
-                   console=True )
+                   console=True,
+                   icon='kwiiyatta/view/res/yatta_aoi.ico' )
 
 MERGE((kwiiyatta_a, 'kwiiyatta', 'kwiiyatta'),
       (kwiieiya_a, 'kwiieiya', 'kwiieiya'))
