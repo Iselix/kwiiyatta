@@ -6,6 +6,12 @@ import setuptools
 import setuptools.command.build_py
 
 
+class BuildPyCommand(setuptools.command.build_py.build_py):
+    def run(self):
+        self.run_command('qt_uic')
+        setuptools.command.build_py.build_py.run(self)
+
+
 class QtUicCommand(setuptools.Command):
     description = 'run pyside2-uic command to convert ui to py'
     user_options = []
@@ -59,5 +65,6 @@ setuptools.setup(
     },
     cmdclass={
         'qt_uic': QtUicCommand,
+        'build_py': BuildPyCommand,
     },
 )
