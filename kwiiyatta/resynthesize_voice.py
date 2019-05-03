@@ -1,12 +1,16 @@
 import copy
 import pathlib
+import sys
+
+from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import QApplication
 
 import kwiiyatta
 
 
 def main():
     conf = kwiiyatta.Config()
-    conf.add_argument('source', type=str,
+    conf.add_argument('source', type=str, default=None, nargs='?',
                       help='Source wav file of voice resynthesis')
     conf.add_argument('--result-dir', type=str,
                       help='Path to write result wav files')
@@ -24,6 +28,20 @@ def main():
                       help='Result waveform sampling rate')
     conf.parse_args()
     conf.play |= conf.no_save
+
+    if conf.source is None:
+        from kwiiyatta.view.qt import kwiieiya
+        app = QApplication()
+        root_path = pathlib.Path(__file__).parent
+        if hasattr(sys, '_MEIPASS'):
+            root_path = pathlib.Path(sys._MEIPASS)/'kwiiyatta'
+        icon = root_path/'view/res/yatta_aoi.ico'
+        app.setWindowIcon(QIcon(str(icon)))
+
+        window = kwiieiya.KwiieiyaDialog()
+        window.show()
+
+        sys.exit(app.exec_())
 
     source_path = pathlib.Path(conf.source).resolve()
     source = conf.create_analyzer(source_path, Analyzer=kwiiyatta.analyze_wav)
