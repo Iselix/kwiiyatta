@@ -40,9 +40,15 @@ class KwiieiyaDialog(QtWidgets.QDialog):
         if filename == '':
             return None, None
 
-        return (filename,
-                self.conf.create_analyzer(filename,
-                                          Analyzer=kwiiyatta.analyze_wav))
+        wav = kwiiyatta.load_wav(filename)
+        if len(wav.data.shape) == 2:
+            QtWidgets.QMessageBox.information(
+                self, 'kwiieiya',
+                ('指定したファイルはモノラルではありません\n'
+                 'チャンネル 1 を読み込みます')
+            )
+            wav.data = wav.data[:, 0]
+        return filename, self.conf.create_analyzer(wav)
 
     def saveFile(self):
         filename, _ = QtWidgets.QFileDialog.getSaveFileName(
