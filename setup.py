@@ -17,6 +17,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
+            'kwiiyatta=kwiiyatta.convert_voice:main',
             'kwiieiya=kwiiyatta.resynthesize_voice:main',
         ],
     },

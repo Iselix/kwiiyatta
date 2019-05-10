@@ -1,15 +1,23 @@
 import pathlib
-import subprocess
+import sys
 
 import pytest
 
 import kwiiyatta
+import kwiiyatta.convert_voice as cv
 
 from tests import dataset, feature
 from tests.plugin import assert_any
 
 
 pytestmark = pytest.mark.slow
+
+
+@pytest.fixture(scope='session', autouse=True)
+def scope_session():
+    sys_argv = sys.argv
+    yield
+    sys.argv = sys_argv
 
 
 def make_expected_feature(wavpath, fullset=False):
@@ -28,9 +36,9 @@ def make_expected_feature(wavpath, fullset=False):
 
 def test_voice_conversion(tmpdir, check):
     result_root = pathlib.Path(tmpdir)
-    subprocess.run(
+    sys.argv = \
         [
-            'python', 'convert_voice.py',
+            sys.argv[0],
             '--source', str(dataset.CLB_DIR),
             '--target', str(dataset.SLT_DIR),
             '--result-dir', str(result_root),
@@ -38,7 +46,8 @@ def test_voice_conversion(tmpdir, check):
             '--converter-components', '1',
             '--max-files', '8',
             str(dataset.CLB_DIR/'arctic_a0009.wav'),
-        ], check=True)
+        ]
+    cv.main()
 
     assert (result_root/'arctic_a0009.diff.wav').is_file()
     assert (result_root/'arctic_a0009.synth.wav').is_file()
@@ -65,9 +74,9 @@ def test_voice_conversion(tmpdir, check):
 @pytest.mark.assert_any
 def test_voice_conversion_fullset(tmpdir):
     result_root = pathlib.Path(tmpdir)
-    subprocess.run(
+    sys.argv = \
         [
-            'python', 'convert_voice.py',
+            sys.argv[0],
             '--source',
             str(dataset.get_dataset_path(dataset.CLB_DIR, fullset=True)),
             '--target',
@@ -82,7 +91,8 @@ def test_voice_conversion_fullset(tmpdir):
                                      fullset=True)),
             str(dataset.get_wav_path(dataset.CLB_DIR/'arctic_a0003.wav',
                                      fullset=True)),
-        ], check=True)
+        ]
+    cv.main()
 
     results = ['arctic_a0001', 'arctic_a0002', 'arctic_a0003']
 
