@@ -24,12 +24,14 @@ def test_set_Analyzer_param():
     assert analyzer._spectrum_envelope is None
     assert analyzer._mel_cepstrum.data is None
     assert analyzer._aperiodicity is None
+    assert analyzer._is_voiced is None
 
     _ = analyzer.aperiodicity
     assert analyzer._f0 is not None
     assert analyzer._spectrum_envelope is None
     assert analyzer._mel_cepstrum.data is None
     assert analyzer._aperiodicity is not None
+    assert analyzer._is_voiced is None
 
     analyzer._aperiodicity = None
     _ = analyzer.mel_cepstrum
@@ -37,7 +39,19 @@ def test_set_Analyzer_param():
     assert analyzer._spectrum_envelope is not None
     assert analyzer._mel_cepstrum.data is not None
     assert analyzer._aperiodicity is None
+    assert analyzer._is_voiced is None
 
+    analyzer = kwiiyatta.analyze_wav(dataset.CLB_WAV)
+
+    _ = analyzer.is_voiced
+    assert analyzer._f0 is not None
+    assert analyzer._spectrum_envelope is None
+    assert analyzer._mel_cepstrum.data is None
+    assert analyzer._aperiodicity is not None
+    assert analyzer._is_voiced is not None
+
+    analyzer = kwiiyatta.analyze_wav(dataset.CLB_WAV)
+    _ = analyzer.mel_cepstrum
     feature = kwiiyatta.feature(analyzer)
     assert analyzer is not feature
     assert analyzer.mel_cepstrum_order == feature.mel_cepstrum_order
@@ -52,6 +66,8 @@ def test_set_Analyzer_param():
             is feature._mel_cepstrum.data)
     assert analyzer._aperiodicity is not None
     assert analyzer._aperiodicity is feature.aperiodicity
+    assert analyzer._is_voiced is None
+    assert (analyzer.is_voiced == feature.is_voiced).all()
 
     feature = feature[::2]
     f = copy.copy(feature)
