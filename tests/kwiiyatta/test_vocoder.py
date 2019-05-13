@@ -1,6 +1,8 @@
 import copy
 import itertools
 
+import fastdtw
+
 from nnmnkwii.preprocessing.alignment import DTWAligner
 
 import numpy as np
@@ -242,7 +244,25 @@ def test_mcep_to_spec(wavfile, mcep_order):
     assert_any.between(0.021, spec_diff, 0.091)
 
 
-def test_align_even():
+def test_align_even_raw(check):
+    a1 = feature.get_analyzer(dataset.CLB_WAV)
+    a2 = feature.get_analyzer(dataset.SLT_WAV)
+
+    mcep1 = a1.mel_cepstrum.data
+    mcep2 = a2.mel_cepstrum.data
+    mcep1 = mcep1.reshape(1, *mcep1.shape)
+    mcep2 = mcep2.reshape(1, *mcep2.shape)
+    mcep1, mcep2 = DTWAligner(verbose=0).transform((mcep1, mcep2))
+    exp_m1 = mcep1[0, :, :]
+    exp_m2 = mcep2[0, :, :]
+
+    act1, act2 = kwiiyatta.align_even(a1, a2, vuv=None, power='raw')
+
+    assert (exp_m1 == act1.mel_cepstrum.data).all()
+    assert (exp_m2 == act2.mel_cepstrum.data).all()
+
+
+def test_align_even(check):
     a1 = feature.get_analyzer(dataset.CLB_WAV)
     a2 = feature.get_analyzer(dataset.SLT_WAV)
 
@@ -256,8 +276,14 @@ def test_align_even():
 
     act1, act2 = kwiiyatta.align_even(a1, a2)
 
-    assert (exp_m1 == act1.mel_cepstrum.data).all()
-    assert (exp_m2 == act2.mel_cepstrum.data).all()
+    dist_1, _ = fastdtw.fastdtw(exp_m1,
+                                act1.mel_cepstrum.data,
+                                radius=1, dist=2)
+    dist_2, _ = fastdtw.fastdtw(exp_m2,
+                                act2.mel_cepstrum.data,
+                                radius=1, dist=2)
+    assert dist_1 == 0
+    check.round_equal(22, dist_2)
 
 
 @pytest.mark.assert_any
