@@ -56,6 +56,26 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="sourceApeThresholdLabel">
+          <property name="text">
+           <string>有声判定閾値</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="sourceApeThresholdSpinBox">
+          <property name="maximum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.850000000000000</double>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -155,6 +175,26 @@
          <widget class="QLabel" name="carrierFs">
           <property name="text">
            <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="carrierApeThresholdLabel_2">
+          <property name="text">
+           <string>有声判定閾値</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="carrierApeThresholdSpinBox">
+          <property name="maximum">
+           <double>1.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.010000000000000</double>
+          </property>
+          <property name="value">
+           <double>0.850000000000000</double>
           </property>
          </widget>
         </item>
@@ -325,12 +365,14 @@
   </layout>
  </widget>
  <tabstops>
+  <tabstop>sourceApeThresholdSpinBox</tabstop>
   <tabstop>openSourceButton</tabstop>
   <tabstop>playSourceButton</tabstop>
   <tabstop>carrierBox</tabstop>
+  <tabstop>carrierApeThresholdSpinBox</tabstop>
+  <tabstop>useDiffvcCheckBox</tabstop>
   <tabstop>openCarrierButton</tabstop>
   <tabstop>playCarrierButton</tabstop>
-  <tabstop>useDiffvcCheckBox</tabstop>
   <tabstop>framePeriodSpinBox</tabstop>
   <tabstop>mcepOrderSpinBox</tabstop>
   <tabstop>useMcepCheckBox</tabstop>
