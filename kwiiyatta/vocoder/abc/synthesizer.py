@@ -98,3 +98,8 @@ class Synthesizer(abc.ABC):
         return cls._resample(feature, fs, new_fs,
                              cls._resample_up_aperiodicity,
                              cls._resample_down_aperiodicity)
+
+    @staticmethod
+    @abc.abstractmethod
+    def extract_is_voiced(feature):
+        raise NotImplementedError

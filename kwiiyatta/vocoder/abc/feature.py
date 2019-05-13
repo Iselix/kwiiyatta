@@ -16,6 +16,7 @@ class Feature(abc.ABC):
         else:
             self.Synthesizer = Synthesizer
         self._mel_cepstrum = MelCepstrum(fs, frame_period)
+        self._is_voiced = None
 
     def __copy__(self):
         cls = self.__class__
@@ -139,6 +140,15 @@ class Feature(abc.ABC):
     def mel_cepstrum(self):
         return self.extract_mel_cepstrum()
 
+    def extract_is_voiced(self):
+        if self._is_voiced is None:
+            self._is_voiced = self.Synthesizer.extract_is_voiced(self)
+        return self._is_voiced
+
+    @property
+    def is_voiced(self):
+        return self.extract_is_voiced()
+
     @abc.abstractmethod
     def ascontiguousarray(self):
         raise NotImplementedError
@@ -161,6 +171,9 @@ class Feature(abc.ABC):
         f0 = self.f0[key]
         spec = self.spectrum_envelope[key]
         ape = self.aperiodicity[key]
+        is_voiced = self._is_voiced
+        if is_voiced is not None:
+            is_voiced = is_voiced[key]
         mcep = None
         if self._mel_cepstrum.data is not None:
             mcep = self.mel_cepstrum.data[key]
@@ -174,6 +187,8 @@ class Feature(abc.ABC):
         result._f0 = f0
         result._spectrum_envelope = spec
         result._aperiodicity = ape
+        if is_voiced is not None:
+            result._is_voiced = is_voiced
         if mcep is not None:
             result._mel_cepstrum.data = mcep
         return result
@@ -212,6 +227,8 @@ class MutableFeature(Feature):
 
     @Feature.f0.setter
     def f0(self, value):
+        if value is not None:
+            self._is_voiced = None
         self._set_f0(value)
 
     @abc.abstractmethod
@@ -225,6 +242,7 @@ class MutableFeature(Feature):
                 self.extract_mel_cepstrum()
         else:
             self._mel_cepstrum.data = None
+            self._is_voiced = None
         self._set_spectrum_envelope(value)
 
     @abc.abstractmethod
@@ -233,6 +251,8 @@ class MutableFeature(Feature):
 
     @Feature.aperiodicity.setter
     def aperiodicity(self, value):
+        if value is not None:
+            self._is_voiced = None
         self._set_aperiodicity(value)
 
     @Feature.mel_cepstrum.setter

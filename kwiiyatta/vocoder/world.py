@@ -144,3 +144,9 @@ class WorldSynthesizer(abc.Synthesizer):
             coded_ap = np.ascontiguousarray(ap_interp(np.arange(num)))
         return pyworld.decode_aperiodicity(coded_ap, new_fs,
                                            (new_spectrum_len-1)*2)
+
+    @staticmethod
+    def extract_is_voiced(feature):
+        lowest_f0 = feature.fs / ((feature.spectrum_len - 1) / 2) + 1.0
+        return np.logical_and(feature.f0 >= lowest_f0,
+                              feature.aperiodicity[:, 0] <= 0.999)

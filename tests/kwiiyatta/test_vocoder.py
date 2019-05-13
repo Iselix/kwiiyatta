@@ -1,6 +1,8 @@
 import copy
 import itertools
 
+import fastdtw
+
 from nnmnkwii.preprocessing.alignment import DTWAligner
 
 import numpy as np
@@ -24,12 +26,14 @@ def test_set_Analyzer_param():
     assert analyzer._spectrum_envelope is None
     assert analyzer._mel_cepstrum.data is None
     assert analyzer._aperiodicity is None
+    assert analyzer._is_voiced is None
 
     _ = analyzer.aperiodicity
     assert analyzer._f0 is not None
     assert analyzer._spectrum_envelope is None
     assert analyzer._mel_cepstrum.data is None
     assert analyzer._aperiodicity is not None
+    assert analyzer._is_voiced is None
 
     analyzer._aperiodicity = None
     _ = analyzer.mel_cepstrum
@@ -37,7 +41,19 @@ def test_set_Analyzer_param():
     assert analyzer._spectrum_envelope is not None
     assert analyzer._mel_cepstrum.data is not None
     assert analyzer._aperiodicity is None
+    assert analyzer._is_voiced is None
 
+    analyzer = kwiiyatta.analyze_wav(dataset.CLB_WAV)
+
+    _ = analyzer.is_voiced
+    assert analyzer._f0 is not None
+    assert analyzer._spectrum_envelope is None
+    assert analyzer._mel_cepstrum.data is None
+    assert analyzer._aperiodicity is not None
+    assert analyzer._is_voiced is not None
+
+    analyzer = kwiiyatta.analyze_wav(dataset.CLB_WAV)
+    _ = analyzer.mel_cepstrum
     feature = kwiiyatta.feature(analyzer)
     assert analyzer is not feature
     assert analyzer.mel_cepstrum_order == feature.mel_cepstrum_order
@@ -52,6 +68,8 @@ def test_set_Analyzer_param():
             is feature._mel_cepstrum.data)
     assert analyzer._aperiodicity is not None
     assert analyzer._aperiodicity is feature.aperiodicity
+    assert analyzer._is_voiced is None
+    assert (analyzer.is_voiced == feature.is_voiced).all()
 
     feature = feature[::2]
     f = copy.copy(feature)
@@ -226,7 +244,25 @@ def test_mcep_to_spec(wavfile, mcep_order):
     assert_any.between(0.021, spec_diff, 0.091)
 
 
-def test_align_even():
+def test_align_even_raw(check):
+    a1 = feature.get_analyzer(dataset.CLB_WAV)
+    a2 = feature.get_analyzer(dataset.SLT_WAV)
+
+    mcep1 = a1.mel_cepstrum.data
+    mcep2 = a2.mel_cepstrum.data
+    mcep1 = mcep1.reshape(1, *mcep1.shape)
+    mcep2 = mcep2.reshape(1, *mcep2.shape)
+    mcep1, mcep2 = DTWAligner(verbose=0).transform((mcep1, mcep2))
+    exp_m1 = mcep1[0, :, :]
+    exp_m2 = mcep2[0, :, :]
+
+    act1, act2 = kwiiyatta.align_even(a1, a2, vuv=None, power='raw')
+
+    assert (exp_m1 == act1.mel_cepstrum.data).all()
+    assert (exp_m2 == act2.mel_cepstrum.data).all()
+
+
+def test_align_even(check):
     a1 = feature.get_analyzer(dataset.CLB_WAV)
     a2 = feature.get_analyzer(dataset.SLT_WAV)
 
@@ -240,8 +276,14 @@ def test_align_even():
 
     act1, act2 = kwiiyatta.align_even(a1, a2)
 
-    assert (exp_m1 == act1.mel_cepstrum.data).all()
-    assert (exp_m2 == act2.mel_cepstrum.data).all()
+    dist_1, _ = fastdtw.fastdtw(exp_m1,
+                                act1.mel_cepstrum.data,
+                                radius=1, dist=2)
+    dist_2, _ = fastdtw.fastdtw(exp_m2,
+                                act2.mel_cepstrum.data,
+                                radius=1, dist=2)
+    check.round_equal(507, dist_1)
+    check.round_equal(685, dist_2)
 
 
 @pytest.mark.assert_any

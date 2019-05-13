@@ -215,7 +215,8 @@ def test_dataset_array(fullset_clb, fullset_slt, fullset_expected, use_delta):
         MelCepstrumDataset(
             AlignedDataset(
                 TrimmedDataset(
-                    kwiiyatta.ParallelDataset(d1, d2))))
+                    kwiiyatta.ParallelDataset(d1, d2)),
+                vuv=None, power='raw'))
     if use_delta:
         parallel_dataset = DeltaFeatureDataset(parallel_dataset)
 
