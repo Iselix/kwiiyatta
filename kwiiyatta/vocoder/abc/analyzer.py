@@ -31,6 +31,10 @@ class Analyzer(Feature):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def clear_features(self):
+        self.clear_mel_cepstrum()
+
+    @abc.abstractmethod
     def extract_f0(self):
         raise NotImplementedError
 

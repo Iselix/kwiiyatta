@@ -26,6 +26,10 @@ class WorldAnalyzer(abc.Analyzer):
             return self._spectrum_envelope.shape[-1]
         return WorldSynthesizer.fs_spectrum_len(self.fs)
 
+    def clear_features(self):
+        super().clear_features()
+        self._f0 = self._spectrum_envelope = self._aperiodicity = None
+
     def extract_f0(self, **kwargs):
         if self._f0 is None:
             self._f0, self._timeaxis = pyworld.dio(

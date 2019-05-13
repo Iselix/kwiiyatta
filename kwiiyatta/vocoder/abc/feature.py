@@ -132,6 +132,9 @@ class Feature(abc.ABC):
             return self._mel_cepstrum
         return None
 
+    def clear_mel_cepstrum(self):
+        self._mel_cepstrum.data = None
+
     @property
     def mel_cepstrum(self):
         return self.extract_mel_cepstrum()
