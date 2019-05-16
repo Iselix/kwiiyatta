@@ -1,4 +1,8 @@
+import math
+
 import pytest
+
+import pytest_check
 
 
 pytest_plugins = [
@@ -24,3 +28,17 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest_check.check_func
+def check_round_equal(expect, actual, sig_dig=2, eps=1.0):
+    eps = min(eps,
+              (math.pow(10, math.floor(math.log10(abs(expect))-sig_dig+1))
+               if expect != 0 else 0))
+    assert expect <= actual < expect + eps
+
+
+@pytest.fixture
+def check(check):
+    check.round_equal = check_round_equal
+    return check
