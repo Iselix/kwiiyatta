@@ -1,3 +1,5 @@
+import itertools
+
 import fastdtw
 
 import numpy as np
@@ -43,28 +45,61 @@ def make_feature(f, fs, vuv='voiced', vuv_weight=8,
     return feature
 
 
-def dtw_feature(x, y, **kwargs):
+def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
     fs = min(x.fs, y.fs)
 
-    dist, path = fastdtw.fastdtw(
-        make_feature(x, fs, **kwargs),
-        make_feature(y, fs, **kwargs),
-        dist=2)
+    kwargs['vuv'] = vuv
+    kwargs['power'] = power
 
-    return (dist, np.array(path))
+    x_feature = make_feature(x, fs, **kwargs)
+    y_feature = make_feature(y, fs, **kwargs)
+
+    dist, path = fastdtw.fastdtw(x_feature, y_feature, dist=2)
+
+    def check(x, y):
+        if power == 'binalize':
+            if (x_feature[x, 0] > 0) ^ (y_feature[y, 0] > 0):
+                return False
+        if vuv is not None:
+            if (x_feature[x, 1] > 0) ^ (y_feature[y, 0] > 0):
+                return False
+        return True
+
+    if strict:
+        path = np.fromiter(
+                itertools.chain(
+                    path[0],
+                    itertools.chain.from_iterable(
+                        [x, y] for x, y in path[1:-1] if check(x, y)
+                    ),
+                    path[-1]
+                ),
+                np.int
+        ).reshape((-1, 2))
+    else:
+        path = np.array(path)
+
+    return dist, path
 
 
 def project_path_iter(path):
-    prev_y = -1
+    prev_x = prev_y = -1
     for x, y in path:
         if y == prev_y:
             continue
-        yield x
+        if y - prev_y > 1:
+            diff_x = x - prev_x
+            diff_y = y - prev_y
+            for i in range(diff_y):
+                yield prev_x + diff_x * i // (diff_y-1)
+        else:
+            yield x
+        prev_x = x
         prev_y = y
 
 
-def align(feature, target, vuv='f0', **kwargs):
-    _, path = dtw_feature(feature, target, vuv=vuv, **kwargs)
+def align(feature, target, vuv='f0', strict=False, **kwargs):
+    _, path = dtw_feature(feature, target, vuv=vuv, strict=strict, **kwargs)
     return feature[list(project_path_iter(path))]
 
 

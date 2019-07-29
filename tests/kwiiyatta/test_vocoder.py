@@ -282,8 +282,8 @@ def test_align_even(check):
     dist_2, _ = fastdtw.fastdtw(exp_m2,
                                 act2.mel_cepstrum.data,
                                 radius=1, dist=2)
-    assert dist_1 == 0
-    check.round_equal(22, dist_2)
+    check.round_equal(507, dist_1)
+    check.round_equal(685, dist_2)
 
 
 @pytest.mark.assert_any
