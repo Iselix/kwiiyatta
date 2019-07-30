@@ -53,9 +53,9 @@ def TrimmedDataset(feature):
 
 
 @abc.map_dataset(expand_tuple=False)
-def AlignedDataset(features, vuv=None, power='raw', **kwargs):
+def AlignedDataset(features, **kwargs):
     a, b = features
-    return kwiiyatta.align_even(a, b, vuv=vuv,  power=power, **kwargs)
+    return kwiiyatta.align_even(a, b, **kwargs)
 
 
 def make_dataset_to_array(dataset, keys=None):
