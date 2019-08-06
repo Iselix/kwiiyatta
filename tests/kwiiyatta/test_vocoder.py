@@ -256,13 +256,15 @@ def test_align_even_raw(check):
     exp_m1 = mcep1[0, :, :]
     exp_m2 = mcep2[0, :, :]
 
-    act1, act2 = kwiiyatta.align_even(a1, a2, vuv=None, power='raw')
+    act1, act2 = kwiiyatta.align_even(a1, a2, vuv=None, power='raw',
+                                      strict=False, pad_silence=False)
 
     assert (exp_m1 == act1.mel_cepstrum.data).all()
     assert (exp_m2 == act2.mel_cepstrum.data).all()
 
 
 def test_align_even(check):
+    np.random.seed(0)
     a1 = feature.get_analyzer(dataset.CLB_WAV)
     a2 = feature.get_analyzer(dataset.SLT_WAV)
 
@@ -282,8 +284,8 @@ def test_align_even(check):
     dist_2, _ = fastdtw.fastdtw(exp_m2,
                                 act2.mel_cepstrum.data,
                                 radius=1, dist=2)
-    check.round_equal(507, dist_1)
-    check.round_equal(685, dist_2)
+    check.round_equal(765, dist_1)
+    check.round_equal(762, dist_2)
 
 
 @pytest.mark.assert_any
@@ -463,3 +465,15 @@ def test_reshape(check):
     spec_diff = feature.calc_powered_diff(
         a2.spectrum_envelope, f1.reshaped_spectrum_envelope(a2.spectrum_len))
     check.round_equal(0.090, spec_diff)
+
+
+@pytest.mark.assert_any
+@pytest.mark.parametrize('fs', dataset.FS)
+def test_silence(fs):
+    silence_feature = kwiiyatta.Synthesizer.create_silence_feature(100, fs)
+
+    assert silence_feature.frame_len == 100
+
+    wav = silence_feature.synthesize()
+
+    assert_any.between(4e-8, wav.data.max(), 6e-8, sig_dig=1)

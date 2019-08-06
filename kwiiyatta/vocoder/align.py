@@ -4,6 +4,8 @@ import fastdtw
 
 import numpy as np
 
+import kwiiyatta
+
 
 def binalize(x, threshold, ceil, floor=0, out=None):
     if out is None:
@@ -82,28 +84,51 @@ def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
     return dist, path
 
 
-def project_path_iter(path):
+def project_path_iter(path, trim=True, trim_len=1):
     prev_x = prev_y = -1
+    if trim:
+        prev_y += trim_len
+    len_y = path[-1][1] + 1
+    if trim:
+        len_y -= trim_len
     for x, y in path:
-        if y == prev_y:
+        if y <= prev_y:
             continue
-        if y - prev_y > 1:
+        elif y - prev_y > 1:
+            y = min(y, len_y-1)
             diff_x = x - prev_x
             diff_y = y - prev_y
             for i in range(diff_y):
                 yield prev_x + diff_x * i // (diff_y-1)
+        elif y >= len_y:
+            break
         else:
             yield x
         prev_x = x
         prev_y = y
 
 
-def align(feature, target, vuv='f0', strict=False, **kwargs):
+def align(feature, target, vuv='f0', strict=False,
+          pad_silence=True, pad_len=100,
+          **kwargs):
+    if pad_silence:
+        feature = kwiiyatta.pad_silence(feature, frame_len=pad_len)
+        target = kwiiyatta.pad_silence(target, frame_len=pad_len)
     _, path = dtw_feature(feature, target, vuv=vuv, strict=strict, **kwargs)
-    return feature[list(project_path_iter(path))]
+    return feature[list(project_path_iter(path, trim=pad_silence,
+                                          trim_len=pad_len))]
 
 
-def align_even(a, b, **kwargs):
+def align_even(a, b, pad_silence=True, pad_len=100, **kwargs):
+    if pad_silence:
+        a = kwiiyatta.pad_silence(a, pad_len)
+        b = kwiiyatta.pad_silence(b, pad_len)
     _, path = dtw_feature(a, b, **kwargs)
     path = np.array(path).T
+    if pad_silence:
+        begin = np.argmax(np.logical_and(path[0] >= pad_len,
+                                         path[1] >= pad_len))
+        end = np.argmax(np.logical_and(path[0] >= a.frame_len-pad_len,
+                                       path[1] >= b.frame_len-pad_len))
+        path = path[:, begin:end]
     return a[path[0]], b[path[1]]

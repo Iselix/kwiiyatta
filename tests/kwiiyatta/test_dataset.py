@@ -216,7 +216,7 @@ def test_dataset_array(fullset_clb, fullset_slt, fullset_expected, use_delta):
             AlignedDataset(
                 TrimmedDataset(
                     kwiiyatta.ParallelDataset(d1, d2)),
-                vuv=None, power='raw'))
+                vuv=None, power='raw', pad_silence=False))
     if use_delta:
         parallel_dataset = DeltaFeatureDataset(parallel_dataset)
 

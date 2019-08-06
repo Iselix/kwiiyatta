@@ -1,5 +1,9 @@
 import copy
 
+import numpy as np
+
+import kwiiyatta
+
 from . import abc
 
 
@@ -10,6 +14,31 @@ def feature(arg, **kwargs):
     if isinstance(arg, abc.Feature):
         return Feature.init(arg, **kwargs)
     raise TypeError("argument should be int or Feature")
+
+
+def pad_silence(feature, frame_len):
+    padded_feature = kwiiyatta.feature(feature)
+    padded_feature.f0 = np.concatenate((
+        feature.Synthesizer.silence_f0(frame_len, feature.fs),
+        feature.f0,
+        feature.Synthesizer.silence_f0(frame_len, feature.fs)
+    ))
+    padded_feature.spectrum_envelope = np.concatenate((
+        feature.Synthesizer.silence_spectrum_envelope(
+            frame_len, feature.fs, feature.spectrum_len),
+        feature.spectrum_envelope,
+        feature.Synthesizer.silence_spectrum_envelope(
+            frame_len, feature.fs, feature.spectrum_len)
+    ))
+    padded_feature.aperiodicity = np.concatenate((
+        feature.Synthesizer.silence_aperiodicity(
+            frame_len, feature.fs, feature.spectrum_len),
+        feature.aperiodicity,
+        feature.Synthesizer.silence_aperiodicity(
+            frame_len, feature.fs, feature.spectrum_len)
+    ))
+
+    return padded_feature
 
 
 class Feature(abc.MutableFeature):

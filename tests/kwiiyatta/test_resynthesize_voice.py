@@ -88,7 +88,7 @@ def test_voice_resynthesis_carrier(check, tmpdir):
     check.round_equal(0.065, f0_diff)
     check.round_equal(0.23, spec_diff)
     check.round_equal(0.083, ape_diff)
-    check.round_equal(0.062, mcep_diff)
+    check.round_equal(0.069, mcep_diff)
 
 
 def test_voice_resynthesis_diffvc(check, tmpdir):
