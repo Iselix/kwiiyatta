@@ -90,7 +90,7 @@ class Config:
         tgt_dataset = \
             kwiiyatta.WavFileDataset(self.target_path, Analyzer=analyzer)
 
-        return kwiiyatta.align(src_dataset, tgt_dataset, pad_silence=False)
+        return kwiiyatta.align(src_dataset, tgt_dataset)
 
     def train_converter(self, **kwargs):
         converter = self.create_converter(**kwargs)

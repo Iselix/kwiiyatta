@@ -40,7 +40,7 @@ def main():
     if conf.carrier is not None:
         carrier = conf.create_analyzer(conf.carrier,
                                        Analyzer=kwiiyatta.analyze_wav)
-        feature = kwiiyatta.align(source, carrier, pad_silence=False)
+        feature = kwiiyatta.align(source, carrier)
         if conf.diffvc:
             mcep_diff = copy.copy(feature.mel_cepstrum)
             mcep_diff.data -= carrier.mel_cepstrum.data
