@@ -8,9 +8,20 @@ import kwiiyatta
 
 
 class Synthesizer(abc.ABC):
+    @classmethod
+    def synthesize(cls, feature, normalize=True, **kwargs):
+        wavdata = cls._synthesize(feature)
+        if normalize:
+            wavdata.normalize(None)
+            for wav in (wavdata.data[feature.fs*i//1000:
+                                     feature.fs*(i+1)//1000]
+                        for i in range(feature.frame_len)):
+                kwiiyatta.wavfile.normalize_data(wav, **kwargs)
+        return wavdata
+
     @staticmethod
     @abc.abstractmethod
-    def synthesize(feature):
+    def _synthesize(feature):
         raise NotImplementedError
 
     @staticmethod

@@ -74,7 +74,7 @@ class WorldSynthesizer(abc.Synthesizer):
         return kwiiyatta.reshape(feature, reshape_spectrum_len+1)
 
     @classmethod
-    def synthesize(cls, feature):
+    def _synthesize(cls, feature):
         synth_feature = cls.reshape_feature(feature)
         synth_feature.ascontiguousarray()
         return Wavdata(

@@ -177,8 +177,8 @@ def test_reanalyze(wavfile, dtype, fs, frame_period):
         feature.calc_feature_diffs(a1, a2)
     assert_any.between(0.052, f0_diff, 0.094)
     assert_any.between(0.20, spec_diff, 0.22)
-    assert_any.between(0.062, ape_diff, 0.097)
-    assert_any.between(0.029, mcep_diff, 0.055)
+    assert_any.between(0.063, ape_diff, 0.096)
+    assert_any.between(0.030, mcep_diff, 0.055)
 
 
 def test_feature():
@@ -332,8 +332,8 @@ def test_resample_down(fs1, fs2, wavfile, frame_period):
         feature.calc_feature_diffs(a1, a2_r_s)
     assert_any.between(0.055, f0_diff, 0.11)
     assert_any.between(0.20, spec_diff, 0.23)
-    assert_any.between(0.072, ape_diff, 0.11)
-    assert_any.between(0.036, mcep_diff, 0.056)
+    assert_any.between(0.072, ape_diff, 0.10)
+    assert_any.between(0.038, mcep_diff, 0.056)
 
     f2 = kwiiyatta.feature(a2)
     f2.extract_mel_cepstrum()
@@ -397,8 +397,8 @@ def test_resample_up(fs1, fs2, wavfile, frame_period):
         feature.calc_feature_diffs(a1, a2_r_s)
     assert_any.between(0.050, f0_diff, 0.11)
     assert_any.between(0.20, spec_diff, 0.23)
-    assert_any.between(0.064, ape_diff, 0.32)
-    assert_any.between(0.046, mcep_diff, 0.16)
+    assert_any.between(0.065, ape_diff, 0.32)
+    assert_any.between(0.047, mcep_diff, 0.16)
 
     f2 = kwiiyatta.feature(a2)
     f2.extract_mel_cepstrum()
