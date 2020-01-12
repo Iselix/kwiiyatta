@@ -153,8 +153,8 @@ class Feature(abc.ABC):
     def ascontiguousarray(self):
         raise NotImplementedError
 
-    def synthesize(self):
-        return self.Synthesizer.synthesize(self)
+    def synthesize(self, **kwargs):
+        return self.Synthesizer.synthesize(self, **kwargs)
 
     def __eq__(self, other):
         if self.frame_period != other.frame_period or self.fs != other.fs:

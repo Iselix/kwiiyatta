@@ -5,6 +5,13 @@ import pyaudio
 from scipy.io import wavfile
 
 
+def normalize_data(data, peak_lv=-1):
+    max_peak = np.power(10, peak_lv/10)
+    peak = np.abs(data).max()
+    if peak > max_peak:
+        data *= max_peak/peak
+
+
 class Wavdata:
     def __init__(self, fs, data):
         self.fs = fs
@@ -14,10 +21,7 @@ class Wavdata:
         dc = self.data.mean()
         self.data -= dc
         if peak_lv is not None:
-            max_peak = np.power(10, peak_lv/10)
-            peak = np.abs(self.data).max()
-            if peak > max_peak:
-                self.data *= max_peak/peak
+            normalize_data(self.data, peak_lv)
 
     def save(self, wav, normalize=True, **kwargs):
         if normalize:

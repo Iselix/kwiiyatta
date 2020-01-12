@@ -1,7 +1,7 @@
 import copy
 
 from .align import align, align_even
-from .feature import Feature, feature
+from .feature import Feature, feature, pad_silence
 from .mcep import MelCepstrum
 from .world import WorldAnalyzer, WorldSynthesizer
 
@@ -44,6 +44,6 @@ def reshape(feature, reshape_spectrum_len):
 
 __all__ = ['analyze_wav', 'resample', 'reshape']
 __all__ += ['align', 'align_even']
-__all__ += ['Feature', 'feature']
+__all__ += ['Feature', 'feature', 'pad_silence']
 __all__ += ['MelCepstrum']
 __all__ += ['Analyzer', 'Synthesizer']

@@ -4,11 +4,24 @@ import numpy as np
 
 import scipy
 
+import kwiiyatta
+
 
 class Synthesizer(abc.ABC):
+    @classmethod
+    def synthesize(cls, feature, normalize=True, **kwargs):
+        wavdata = cls._synthesize(feature)
+        if normalize:
+            wavdata.normalize(None)
+            for wav in (wavdata.data[feature.fs*i//1000:
+                                     feature.fs*(i+1)//1000]
+                        for i in range(feature.frame_len)):
+                kwiiyatta.wavfile.normalize_data(wav, **kwargs)
+        return wavdata
+
     @staticmethod
     @abc.abstractmethod
-    def synthesize(feature):
+    def _synthesize(feature):
         raise NotImplementedError
 
     @staticmethod
@@ -103,3 +116,46 @@ class Synthesizer(abc.ABC):
     @abc.abstractmethod
     def extract_is_voiced(feature):
         raise NotImplementedError
+
+    @classmethod
+    def create_silence_feature(cls, frame_len, fs, **kwargs):
+        kwargs.setdefault('Synthesizer', cls)
+        feature = kwiiyatta.feature(fs, **kwargs)
+
+        feature.f0 = cls.silence_f0(frame_len, fs)
+        feature.spectrum_envelope = \
+            cls.silence_spectrum_envelope(frame_len, fs)
+        feature.aperiodicity = cls.silence_aperiodicity(frame_len, fs)
+
+        return feature
+
+    @staticmethod
+    @abc.abstractmethod
+    def silence_f0(frame_len, fs):
+        raise NotImplementedError
+
+    @staticmethod
+    @abc.abstractmethod
+    def _silence_spectrum_envelope(frame_len, fs, spectrum_len):
+        raise NotImplementedError
+
+    @classmethod
+    def silence_spectrum_envelope(cls, frame_len, fs, spectrum_len=None):
+        if spectrum_len is None:
+            spectrum_len = cls.fs_spectrum_len(fs)
+        return cls._silence_spectrum_envelope(frame_len, fs, spectrum_len)
+
+    @staticmethod
+    @abc.abstractmethod
+    def _silence_aperiodicity(frame_len, fs, spectrum_len):
+        raise NotImplementedError
+
+    @classmethod
+    def silence_aperiodicity(cls, frame_len, fs, spectrum_len=None):
+        if spectrum_len is None:
+            spectrum_len = cls.fs_spectrum_len(fs)
+        return cls._silence_aperiodicity(frame_len, fs, spectrum_len)
+
+    @staticmethod
+    def silence_is_voiced(frame_len, fs):
+        return np.full((frame_len), False)
