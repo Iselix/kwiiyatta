@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>357</height>
+    <height>459</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -245,6 +245,47 @@
     </widget>
    </item>
    <item>
+    <layout class="QFormLayout" name="formLayout_4">
+     <item row="1" column="0">
+      <widget class="QLabel" name="transposeKeyLabel">
+       <property name="text">
+        <string>キーの変更</string>
+       </property>
+       <property name="buddy">
+        <cstring></cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QSlider" name="transposeKeySlider">
+         <property name="minimum">
+          <number>-24</number>
+         </property>
+         <property name="maximum">
+          <number>24</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="transposeKeySpinBox">
+         <property name="prefix">
+          <string>+</string>
+         </property>
+         <property name="minimum">
+          <double>-99.989999999999995</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QGroupBox" name="configGroupBox">
      <property name="title">
       <string>設定</string>
@@ -373,6 +414,8 @@
   <tabstop>useDiffvcCheckBox</tabstop>
   <tabstop>openCarrierButton</tabstop>
   <tabstop>playCarrierButton</tabstop>
+  <tabstop>transposeKeySlider</tabstop>
+  <tabstop>transposeKeySpinBox</tabstop>
   <tabstop>framePeriodSpinBox</tabstop>
   <tabstop>mcepOrderSpinBox</tabstop>
   <tabstop>useMcepCheckBox</tabstop>
