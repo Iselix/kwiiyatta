@@ -20,18 +20,44 @@ class KwiieiyaDialog(QtWidgets.QDialog):
         self.ui = kwiieiya.Ui_KwiieiyaDialog()
         self.ui.setupUi(self)
 
+        self.isKeyUpdating = False
+
         self.ui.openSourceButton.clicked.connect(self.openSource)
         self.ui.playSourceButton.clicked.connect(self.playSource)
         self.ui.openCarrierButton.clicked.connect(self.openCarrier)
         self.ui.playCarrierButton.clicked.connect(self.playCarrier)
         self.ui.saveButton.clicked.connect(self.save)
         self.ui.playButton.clicked.connect(self.play)
+        self.ui.transposeKeySlider.valueChanged.connect(
+            self.transposeKeySliderChanged)
+        self.ui.transposeKeySpinBox.valueChanged.connect(
+            self.transposeKeySpinBoxChanged)
 
         if conf is None:
             conf = kwiiyatta.Config()
             conf.parse_args()
 
         self.conf = conf
+
+    def transposeKeySliderChanged(self, value):
+        if self.isKeyUpdating:
+            return
+        self.isKeyUpdating = True
+        self.ui.transposeKeySpinBox.setValue(value)
+        self.isKeyUpdating = False
+
+    def transposeKeySpinBoxChanged(self, value):
+        sender = self.sender()
+        prefix = sender.prefix()
+        if value >= 0 and not prefix:
+            sender.setPrefix('+')
+        elif value < 0 and prefix:
+            sender.setPrefix('')
+        if self.isKeyUpdating:
+            return
+        self.isKeyUpdating = True
+        self.ui.transposeKeySlider.setValue(value)
+        self.isKeyUpdating = False
 
     def openFile(self):
         filename, _ = QtWidgets.QFileDialog.getOpenFileName(
@@ -122,6 +148,11 @@ class KwiieiyaDialog(QtWidgets.QDialog):
         if self.ui.useMcepCheckBox.isChecked():
             feature.extract_mel_cepstrum()
             feature.spectrum_envelope = None
+
+        transposeKey = self.ui.transposeKeySpinBox.value()
+        print(f'key: {transposeKey!s}')
+        if transposeKey != 0:
+            feature.f0 = feature.f0 * (2.0 ** (transposeKey / 12))
         return feature.synthesize()
 
     def save(self):
