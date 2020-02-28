@@ -42,7 +42,7 @@ def test_mlsa_filter(fs1, fs2):
     actual = kwiiyatta.Analyzer(result)
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, actual)
-    assert_any.between(0.053, f0_diff, 0.079)
-    assert_any.between(0.32, spec_diff, 0.56)
-    assert_any.between(0.038, ape_diff, 0.073)
-    assert_any.between(0.038, mcep_diff, 0.087)
+    assert_any.between(0.051, f0_diff, 0.078)
+    assert_any.between(0.32, spec_diff, 0.55)
+    assert_any.between(0.039, ape_diff, 0.073)
+    assert_any.between(0.038, mcep_diff, 0.088)

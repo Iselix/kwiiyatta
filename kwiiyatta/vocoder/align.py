@@ -17,9 +17,9 @@ def binalize(x, threshold, ceil, floor=0, out=None):
     return out
 
 
-def make_feature(f, fs, vuv='voiced', vuv_weight=8,
-                 power='binalize', power_weight=16,
-                 power_pivot='min', power_threshold=2):
+def make_feature(f, fs, vuv='voiced', vuv_weight=9.0,
+                 power='binalize', power_weight=9.4,
+                 power_pivot='max', power_threshold=1.636):
     data = f.resample_mel_cepstrum(fs).data
     data_power = data[:, 0]
 
