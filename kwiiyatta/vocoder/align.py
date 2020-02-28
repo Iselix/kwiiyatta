@@ -47,7 +47,8 @@ def make_feature(f, fs, vuv='voiced', vuv_weight=8,
     return feature
 
 
-def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
+def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True,
+                radius=32, **kwargs):
     fs = min(x.fs, y.fs)
 
     kwargs['vuv'] = vuv
@@ -56,7 +57,7 @@ def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
     x_feature = make_feature(x, fs, **kwargs)
     y_feature = make_feature(y, fs, **kwargs)
 
-    dist, path = fastdtw.fastdtw(x_feature, y_feature, dist=2)
+    dist, path = fastdtw.fastdtw(x_feature, y_feature, dist=2, radius=radius)
 
     def check(x, y):
         if power == 'binalize':
