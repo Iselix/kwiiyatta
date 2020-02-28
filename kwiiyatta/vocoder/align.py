@@ -18,14 +18,25 @@ def binalize(x, threshold, ceil, floor=0, out=None):
 
 
 def make_feature(f, fs, vuv='voiced', vuv_weight=8,
-                 power='binalize', power_weight=16):
+                 power='binalize', power_weight=16,
+                 power_pivot='min', power_threshold=2):
     data = f.resample_mel_cepstrum(fs).data
     data_power = data[:, 0]
 
     feature = np.hstack((np.zeros((len(data), 2)), data[:, 1:]))
 
     if power == 'binalize':
-        threshold = data_power.min() + 2
+        if power_pivot == 'max':
+            threshold = data_power.max() - power_threshold
+        elif power_pivot == 'median':
+            threshold = np.median(data_power) - power_threshold
+        elif power_pivot == 'min':
+            threshold = data_power.min() + power_threshold
+        elif power_pivot == 'fix':
+            threshold = power_threshold
+        else:
+            raise ValueError(f'Unknown power_pivot parameter: {power_pivot!r}')
+
         binalize(data_power, threshold, power_weight,
                  out=feature[:, 0])
     elif power == 'raw':
