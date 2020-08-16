@@ -1,7 +1,7 @@
-# kwiiyatta / kwiieiya - ボイスロイド向け声質変換 / 声質転写ツール
+# kwiieiya - ボイスロイド向け声質転写ツール
 
-kwiiyatta / kwiieiya は VOICEROID 向け声質変換 / 声質転写ツールです。
-VOCALOID の音声を VOICEROID に声質変換することで VOICEROID に歌わせることを目標としています。
+kwiieiya は VOICEROID 向け声質転写ツールです。
+VOCALOID 等の音声に VOICEROID の音声を声質転写することで VOICEROID に歌わせることを目標としています。
 
 ### こんな時には？
 * 音声ファイルを読み込むとエラーになってしまう
