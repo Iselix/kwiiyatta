@@ -11,7 +11,8 @@ class Analyzer(Feature):
     def __init__(self, wavdata, **kwargs):
         super().__init__(wavdata.fs, **kwargs)
         self._data = wavdata.data
-        self._f0 = self._spectrum_envelope = self._aperiodicity = None
+        self._f0 = self._spectrum_envelope = self._aperiodicity = \
+            self._is_voiced = None
 
     @classmethod
     def load_wav(cls, wavfile, **kwargs):

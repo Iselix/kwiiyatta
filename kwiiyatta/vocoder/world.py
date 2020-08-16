@@ -74,7 +74,7 @@ class WorldSynthesizer(abc.Synthesizer):
         return kwiiyatta.reshape(feature, reshape_spectrum_len+1)
 
     @classmethod
-    def synthesize(cls, feature):
+    def _synthesize(cls, feature):
         synth_feature = cls.reshape_feature(feature)
         synth_feature.ascontiguousarray()
         return Wavdata(
@@ -104,9 +104,8 @@ class WorldSynthesizer(abc.Synthesizer):
         pad_spectrum_len = new_spectrum_len - feature.shape[1]
         return np.hstack((
             feature,
-            np.abs(np.random.normal(
-                0, cls.EPS/fs,
-                (feature.shape[0], pad_spectrum_len)))
+            cls.silence_spectrum_envelope(feature.shape[0], fs,
+                                          pad_spectrum_len)
         ))
 
     @classmethod
@@ -140,3 +139,24 @@ class WorldSynthesizer(abc.Synthesizer):
             coded_ap = np.ascontiguousarray(ap_interp(np.arange(num)))
         return pyworld.decode_aperiodicity(coded_ap, new_fs,
                                            (new_spectrum_len-1)*2)
+
+    @staticmethod
+    def extract_is_voiced(feature):
+        lowest_f0 = feature.fs / ((feature.spectrum_len - 1) / 2) + 1.0
+        return np.logical_and(feature.f0 >= lowest_f0,
+                              feature.aperiodicity[:, 0] <= 0.999)
+
+    @staticmethod
+    def silence_f0(frame_len, fs):
+        return np.zeros((frame_len))
+
+    @classmethod
+    def _silence_spectrum_envelope(cls, frame_len, fs, spectrum_len):
+        return np.abs(np.random.normal(
+            0, cls.EPS/fs,
+            (frame_len, spectrum_len)))
+
+    @classmethod
+    def _silence_aperiodicity(cls, frame_len, fs, spectrum_len):
+        return np.full((frame_len, spectrum_len),
+                       1 - cls.SAFE_GUARD_MINIMUM)
