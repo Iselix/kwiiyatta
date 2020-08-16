@@ -85,10 +85,10 @@ def test_voice_resynthesis_carrier(check, tmpdir):
     actual = kwiiyatta.analyze_wav(result_file)
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, actual)
-    check.round_equal(0.065, f0_diff)
-    check.round_equal(0.22, spec_diff)
-    check.round_equal(0.083, ape_diff)
-    check.round_equal(0.061, mcep_diff)
+    check.round_equal(0.093, f0_diff)
+    check.round_equal(0.23, spec_diff)
+    check.round_equal(0.093, ape_diff)
+    check.round_equal(0.060, mcep_diff)
 
 
 def test_voice_resynthesis_diffvc(check, tmpdir):
@@ -119,6 +119,6 @@ def test_voice_resynthesis_diffvc(check, tmpdir):
     f0_diff, spec_diff, ape_diff, mcep_diff = \
         feature.calc_feature_diffs(expected, actual)
     check.round_equal(0.10, f0_diff)
-    check.round_equal(0.35, spec_diff)
+    check.round_equal(0.36, spec_diff)
     check.round_equal(0.076, ape_diff)
-    check.round_equal(0.079, mcep_diff)
+    check.round_equal(0.081, mcep_diff)

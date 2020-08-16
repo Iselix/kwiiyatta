@@ -4,10 +4,12 @@ block_cipher = None
 
 hiddenimports = [
     'bandmat.full',
+    'pkg_resources.py2_warn',
     'sklearn.neighbors.typedefs',
     'sklearn.neighbors.quad_tree',
     'sklearn.tree',
     'sklearn.tree._utils',
+    'sklearn.utils._cython_blas',
 ]
 
 

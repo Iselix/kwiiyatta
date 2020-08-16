@@ -17,15 +17,26 @@ def binalize(x, threshold, ceil, floor=0, out=None):
     return out
 
 
-def make_feature(f, fs, vuv='voiced', vuv_weight=8,
-                 power='binalize', power_weight=16):
+def make_feature(f, fs, vuv='voiced', vuv_weight=9.0,
+                 power='binalize', power_weight=9.4,
+                 power_pivot='max', power_threshold=1.636):
     data = f.resample_mel_cepstrum(fs).data
     data_power = data[:, 0]
 
     feature = np.hstack((np.zeros((len(data), 2)), data[:, 1:]))
 
     if power == 'binalize':
-        threshold = data_power.min() + 2
+        if power_pivot == 'max':
+            threshold = data_power.max() - power_threshold
+        elif power_pivot == 'median':
+            threshold = np.median(data_power) - power_threshold
+        elif power_pivot == 'min':
+            threshold = data_power.min() + power_threshold
+        elif power_pivot == 'fix':
+            threshold = power_threshold
+        else:
+            raise ValueError(f'Unknown power_pivot parameter: {power_pivot!r}')
+
         binalize(data_power, threshold, power_weight,
                  out=feature[:, 0])
     elif power == 'raw':
@@ -47,7 +58,8 @@ def make_feature(f, fs, vuv='voiced', vuv_weight=8,
     return feature
 
 
-def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
+def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True,
+                radius=32, **kwargs):
     fs = min(x.fs, y.fs)
 
     kwargs['vuv'] = vuv
@@ -56,7 +68,7 @@ def dtw_feature(x, y, vuv='voiced', power='binalize', strict=True, **kwargs):
     x_feature = make_feature(x, fs, **kwargs)
     y_feature = make_feature(y, fs, **kwargs)
 
-    dist, path = fastdtw.fastdtw(x_feature, y_feature, dist=2)
+    dist, path = fastdtw.fastdtw(x_feature, y_feature, dist=2, radius=radius)
 
     def check(x, y):
         if power == 'binalize':
